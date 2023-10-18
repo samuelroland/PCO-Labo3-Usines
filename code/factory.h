@@ -1,8 +1,8 @@
 #ifndef FACTORY_H
 #define FACTORY_H
-#include <vector>
-#include "windowinterface.h"
 #include "seller.h"
+#include "windowinterface.h"
+#include <vector>
 
 class Wholesale;
 
@@ -10,8 +10,7 @@ class Wholesale;
  * @brief La classe permet l'implémentation d'une usine et de ces fonctions
  *        de ventes et d'achats.
  */
-class Factory : public Seller
-{
+class Factory : public Seller {
 public:
     /**
      * @brief Constructeur de la classe Factory
@@ -46,15 +45,15 @@ public:
      * @brief Cette fonction permet d'affecter à une usine pluseurs grossistes pour pouvoir échanger avec eux.
      * @param Vecteur de wholesaler
      */
-    void setWholesalers(std::vector<Wholesale*> wholesalers);
+    void setWholesalers(std::vector<Wholesale *> wholesalers);
 
     int getAmountPaidToWorkers();
 
-    static void setInterface(WindowInterface* windowInterface);
+    static void setInterface(WindowInterface *windowInterface);
 
 private:
     // Liste de grossiste auxquels l'usine peut acheter des ressources
-    std::vector<Wholesale*> wholesalers;
+    std::vector<Wholesale *> wholesalers;
     // Liste de ressources voulus pour la production d'un objet
     const std::vector<ItemType> resourcesNeeded;
     // Identifiant de l'objet produit par l'usine, selon l'enum ItemType
@@ -62,7 +61,7 @@ private:
     // Compte le nombre d'employé payé
     int nbBuild;
 
-    static WindowInterface* interface;
+    static WindowInterface *interface;
 
     /**
      * @brief Fonction privée permettant de vérifier si l'usine à toute les ressources
@@ -86,7 +85,7 @@ private:
 // Si dessous sont les trois types d'usines. Elle vont créer des usines en leur
 // spécifiant les besoins en matérial et leur identifiant.
 
-class PlasticFactory : public Factory{
+class PlasticFactory : public Factory {
 private:
 public:
     PlasticFactory(int uniqueId, int fund);
@@ -104,4 +103,4 @@ public:
     RobotFactory(int uniqueId, int fund);
 };
 
-#endif // FACTORY_H
+#endif// FACTORY_H

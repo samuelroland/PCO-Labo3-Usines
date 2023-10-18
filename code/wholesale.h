@@ -1,25 +1,25 @@
 #ifndef WHOLESALE_H
 #define WHOLESALE_H
 #include "seller.h"
-#include <vector>
 #include "windowinterface.h"
+#include <vector>
 
 /**
  * @brief La classe permet l'implémentation d'un grossiste et de ces fonctions
  *        de ventes et d'achats.
  */
-class Wholesale : public Seller
-{
+class Wholesale : public Seller {
 private:
     // Vecteur de vendeurs (mines, usines) auxquels le grossiste peut acheter des ressources
-    std::vector<Seller*> sellers;
+    std::vector<Seller *> sellers;
 
-    static WindowInterface* interface;
+    static WindowInterface *interface;
 
     /**
      * @brief Fonction permettant d'acheter des ressources à des usines ou des mines
      */
     void buyResources();
+
 public:
     /**
      * @brief Constructeur de grossiste
@@ -39,9 +39,9 @@ public:
      * @brief Fonction permettant de lier des vendeurs
      * @param Vecteurs
      */
-    void setSellers(std::vector<Seller*> sellers);
+    void setSellers(std::vector<Seller *> sellers);
 
-    static void setInterface(WindowInterface* windowInterface);
+    static void setInterface(WindowInterface *windowInterface);
 };
 
-#endif // WHOLESALE_H
+#endif// WHOLESALE_H

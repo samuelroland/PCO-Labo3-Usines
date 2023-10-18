@@ -1,16 +1,16 @@
 #ifndef EXTRACTOR_H
 #define EXTRACTOR_H
-#include <QTimer>
-#include "windowinterface.h"
 #include "costs.h"
 #include "seller.h"
+#include "windowinterface.h"
+#include <QTimer>
 
 /**
  * @brief La classe offrant l'implémentation d'une mine et ces fonctions de ventes.
  */
 class Extractor : public Seller {
 public:
-    static void setInterface(WindowInterface* interface);
+    static void setInterface(WindowInterface *interface);
 
     /**
      * @brief Constructeur d'une mine
@@ -47,7 +47,7 @@ private:
     // Compte le nombre d'employé payé
     int nbExtracted;
 
-    static WindowInterface* interface;
+    static WindowInterface *interface;
 };
 
 
@@ -75,6 +75,4 @@ public:
 };
 
 
-
-
-#endif // EXTRACTOR_H
+#endif// EXTRACTOR_H

@@ -3,8 +3,7 @@
 #include "utils.h"
 #include "windowinterface.h"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     //Création du vecteur de thread
 

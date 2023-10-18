@@ -1,16 +1,15 @@
 #include "factory.h"
-#include "extractor.h"
 #include "costs.h"
+#include "extractor.h"
 #include "wholesale.h"
-#include <pcosynchro/pcothread.h>
 #include <iostream>
+#include <pcosynchro/pcothread.h>
 
-WindowInterface* Factory::interface = nullptr;
+WindowInterface *Factory::interface = nullptr;
 
 
 Factory::Factory(int uniqueId, int fund, ItemType builtItem, std::vector<ItemType> resourcesNeeded)
-    : Seller(fund, uniqueId), resourcesNeeded(resourcesNeeded), itemBuilt(builtItem), nbBuild(0)
-{
+    : Seller(fund, uniqueId), resourcesNeeded(resourcesNeeded), itemBuilt(builtItem), nbBuild(0) {
     assert(builtItem == ItemType::Chip ||
            builtItem == ItemType::Plastic ||
            builtItem == ItemType::Robot);
@@ -22,7 +21,7 @@ Factory::Factory(int uniqueId, int fund, ItemType builtItem, std::vector<ItemTyp
 void Factory::setWholesalers(std::vector<Wholesale *> wholesalers) {
     Factory::wholesalers = wholesalers;
 
-    for(Seller* seller: wholesalers){
+    for (Seller *seller: wholesalers) {
         interface->setLink(uniqueId, seller->getUniqueId());
     }
 }
@@ -36,7 +35,7 @@ int Factory::getMaterialCost() {
 }
 
 bool Factory::verifyResources() {
-    for (auto item : resourcesNeeded) {
+    for (auto item: resourcesNeeded) {
         if (stocks[item] == 0) {
             return false;
         }
@@ -63,7 +62,6 @@ void Factory::orderResources() {
 
     //Temps de pause pour éviter trop de demande
     PcoThread::usleep(10 * 100000);
-
 }
 
 void Factory::run() {
@@ -102,11 +100,8 @@ void Factory::setInterface(WindowInterface *windowInterface) {
     interface = windowInterface;
 }
 
-PlasticFactory::PlasticFactory(int uniqueId, int fund) :
-    Factory::Factory(uniqueId, fund, ItemType::Plastic, {ItemType::Petrol}) {}
+PlasticFactory::PlasticFactory(int uniqueId, int fund) : Factory::Factory(uniqueId, fund, ItemType::Plastic, {ItemType::Petrol}) {}
 
-ChipFactory::ChipFactory(int uniqueId, int fund) :
-    Factory::Factory(uniqueId, fund, ItemType::Chip, {ItemType::Sand, ItemType::Copper}) {}
+ChipFactory::ChipFactory(int uniqueId, int fund) : Factory::Factory(uniqueId, fund, ItemType::Chip, {ItemType::Sand, ItemType::Copper}) {}
 
-RobotFactory::RobotFactory(int uniqueId, int fund) :
-    Factory::Factory(uniqueId, fund, ItemType::Robot, {ItemType::Chip, ItemType::Plastic}) {}
+RobotFactory::RobotFactory(int uniqueId, int fund) : Factory::Factory(uniqueId, fund, ItemType::Robot, {ItemType::Chip, ItemType::Plastic}) {}

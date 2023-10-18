@@ -1,23 +1,21 @@
 #include "wholesale.h"
-#include "factory.h"
 #include "costs.h"
+#include "factory.h"
 #include <iostream>
 #include <pcosynchro/pcothread.h>
 
-WindowInterface* Wholesale::interface = nullptr;
+WindowInterface *Wholesale::interface = nullptr;
 
 Wholesale::Wholesale(int uniqueId, int fund)
-    : Seller(fund, uniqueId)
-{
+    : Seller(fund, uniqueId) {
     interface->updateFund(uniqueId, fund);
     interface->consoleAppendText(uniqueId, "Wholesaler Created");
-
 }
 
-void Wholesale::setSellers(std::vector<Seller*> sellers) {
+void Wholesale::setSellers(std::vector<Seller *> sellers) {
     this->sellers = sellers;
 
-    for(Seller* seller: sellers){
+    for (Seller *seller: sellers) {
         interface->setLink(uniqueId, seller->getUniqueId());
     }
 }
@@ -36,7 +34,7 @@ void Wholesale::buyResources() {
     int price = qty * getCostPerUnit(i);
 
     interface->consoleAppendText(uniqueId, QString("I would like to buy %1 of ").arg(qty) %
-                                 getItemName(i) % QString(" which would cost me %1").arg(price));
+                                                   getItemName(i) % QString(" which would cost me %1").arg(price));
     /* TODO */
 }
 
@@ -56,8 +54,6 @@ void Wholesale::run() {
         PcoThread::usleep((rand() % 10 + 1) * 100000);
     }
     interface->consoleAppendText(uniqueId, "[STOP] Wholesaler routine");
-
-
 }
 
 std::map<ItemType, int> Wholesale::getItemsForSale() {

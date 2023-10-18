@@ -1,17 +1,17 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <vector>
+#include <QDebug>
 #include <QRandomGenerator>
+#include <QTextStream>
 #include <iostream>
 #include <pcosynchro/pcothread.h>
-#include <QDebug>
-#include <QTextStream>
+#include <vector>
 
 #include "extractor.h"
 #include "factory.h"
-#include "wholesale.h"
 #include "seller.h"
+#include "wholesale.h"
 
 #define NB_EXTRACTOR 3
 #define NB_FACTORIES 3
@@ -20,9 +20,9 @@
 #define FACTORIES_FUND 300
 #define WHOLESALERS_FUND 250
 
-std::vector<Extractor*> createExtractors(int nbExtractors, int idStart);
-std::vector<Factory*> createFactories(int nbFactories, int idStart);
-std::vector<Wholesale*> createWholesaler(int nbWholesaler, int idStart);
+std::vector<Extractor *> createExtractors(int nbExtractors, int idStart);
+std::vector<Factory *> createFactories(int nbFactories, int idStart);
+std::vector<Wholesale *> createWholesaler(int nbWholesaler, int idStart);
 
 class Utils {
 public:
@@ -30,9 +30,9 @@ public:
     QString getFinalReport();
 
 private:
-    std::vector<Extractor*> extractors;
-    std::vector<Factory*> factories;
-    std::vector<Wholesale*> wholesalers;
+    std::vector<Extractor *> extractors;
+    std::vector<Factory *> factories;
+    std::vector<Wholesale *> wholesalers;
 
     std::vector<std::unique_ptr<PcoThread>> threads;
     std::unique_ptr<PcoThread> utilsThread;
@@ -44,10 +44,9 @@ private:
     void run();
 
     PcoSemaphore semEnd{0};
+
 public:
     Utils(int nbExtractor, int nbFactory, int nbWholesale);
-
-
 };
 
-#endif // UTILS_H
+#endif// UTILS_H

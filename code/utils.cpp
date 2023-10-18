@@ -10,19 +10,18 @@ void Utils::externalEndService() {
     endService();
     semEnd.acquire();
     utilsThread->join();
-
 }
 
-std::vector<Extractor*> createExtractors(int nbExtractors, int idStart) {
-    if (nbExtractors < 1){
+std::vector<Extractor *> createExtractors(int nbExtractors, int idStart) {
+    if (nbExtractors < 1) {
         qInfo() << "Cannot make the programm work with less than 1 extractor";
         exit(-1);
     }
 
-    std::vector<Extractor*> extractors;
+    std::vector<Extractor *> extractors;
 
-    for(int i = 0; i < nbExtractors; ++i) {
-        switch(i % 3) {
+    for (int i = 0; i < nbExtractors; ++i) {
+        switch (i % 3) {
             case 0:
                 extractors.push_back(new SandExtractor(i + idStart, EXTRACTOR_FUND));
                 break;
@@ -41,16 +40,16 @@ std::vector<Extractor*> createExtractors(int nbExtractors, int idStart) {
     return extractors;
 }
 
-std::vector<Factory*> createFactories(int nbFactories, int idStart) {
-    if (nbFactories < 1){
+std::vector<Factory *> createFactories(int nbFactories, int idStart) {
+    if (nbFactories < 1) {
         qInfo() << "Cannot make the programm work with less than 1 Factory";
         exit(-1);
     }
 
-    std::vector<Factory*> factories;
+    std::vector<Factory *> factories;
 
-    for(int i = 0; i < nbFactories; ++i) {
-        switch(i % 3) {
+    for (int i = 0; i < nbFactories; ++i) {
+        switch (i % 3) {
             case 0:
                 factories.push_back(new PlasticFactory(i + idStart, FACTORIES_FUND));
                 break;
@@ -69,15 +68,15 @@ std::vector<Factory*> createFactories(int nbFactories, int idStart) {
     return factories;
 }
 
-std::vector<Wholesale*> createWholesaler(int nbWholesaler, int idStart) {
-    if(nbWholesaler < 1){
+std::vector<Wholesale *> createWholesaler(int nbWholesaler, int idStart) {
+    if (nbWholesaler < 1) {
         qInfo() << "Cannot launch the programm without any wholesaler";
         exit(-1);
     }
 
-    std::vector<Wholesale*> wholesalers;
+    std::vector<Wholesale *> wholesalers;
 
-    for(int i = 0; i < nbWholesaler; ++i){
+    for (int i = 0; i < nbWholesaler; ++i) {
         wholesalers.push_back(new Wholesale(i + idStart, WHOLESALERS_FUND));
     }
 
@@ -94,7 +93,7 @@ Utils::Utils(int nbExtractor, int nbFactory, int nbWholesale) {
     this->wholesalers = createWholesaler(nbWholesale, nbExtractor);
     this->factories = createFactories(nbFactory, nbExtractor + nbWholesale);
 
-    for(auto i = factories.begin(); i != factories.end(); ++i) {
+    for (auto i = factories.begin(); i != factories.end(); ++i) {
         (*i)->setWholesalers(wholesalers);
     }
 
@@ -107,22 +106,22 @@ Utils::Utils(int nbExtractor, int nbFactory, int nbWholesale) {
     int countExtractor = 0;
     int countFactory = 0;
 
-    for(auto& w : wholesalers) {
+    for (auto &w: wholesalers) {
 
-        std::vector<Extractor*> tmpExtractors(extractors.begin() + countExtractor, extractors.begin() + countExtractor + extractorsByWholesaler);
+        std::vector<Extractor *> tmpExtractors(extractors.begin() + countExtractor, extractors.begin() + countExtractor + extractorsByWholesaler);
         tmpExtractors.insert(tmpExtractors.end(), extractors.end() - extractorsShared, extractors.end());
 
-        std::vector<Factory*> tmpFactories(factories.begin() + countFactory, factories.begin() + countFactory + factoriesByWholesaler);
+        std::vector<Factory *> tmpFactories(factories.begin() + countFactory, factories.begin() + countFactory + factoriesByWholesaler);
         tmpFactories.insert(tmpFactories.end(), factories.end() - factoriesShared, factories.end());
 
         countExtractor += extractorsByWholesaler;
         countFactory += factoriesByWholesaler;
 
-        std::vector<Seller*> sellers;
-        for (auto& m : tmpExtractors)
-            sellers.push_back(static_cast<Seller*>(m));
-        for (auto& f : tmpFactories)
-            sellers.push_back(static_cast<Seller*>(f));
+        std::vector<Seller *> sellers;
+        for (auto &m: tmpExtractors)
+            sellers.push_back(static_cast<Seller *>(m));
+        for (auto &f: tmpFactories)
+            sellers.push_back(static_cast<Seller *>(f));
         w->setSellers(sellers);
     }
 
@@ -130,34 +129,34 @@ Utils::Utils(int nbExtractor, int nbFactory, int nbWholesale) {
 }
 
 void Utils::run() {
-    for(size_t i = 0; i < extractors.size(); ++i) {
+    for (size_t i = 0; i < extractors.size(); ++i) {
         threads.emplace_back(std::make_unique<PcoThread>(&Extractor::run, extractors[i]));
     }
-    for(size_t i = 0; i < factories.size(); ++i) {
+    for (size_t i = 0; i < factories.size(); ++i) {
         threads.emplace_back(std::make_unique<PcoThread>(&Factory::run, factories[i]));
     }
-    for(size_t i = 0; i < wholesalers.size(); ++i) {
+    for (size_t i = 0; i < wholesalers.size(); ++i) {
         threads.emplace_back(std::make_unique<PcoThread>(&Wholesale::run, wholesalers[i]));
     }
 
-    for (auto& thread : threads) {
+    for (auto &thread: threads) {
         thread->join();
     }
 
     int startFund = (EXTRACTOR_FUND * int(extractors.size()) + (FACTORIES_FUND * int(factories.size()) + (WHOLESALERS_FUND * int(wholesalers.size()))));
     int endFund = 0;
 
-    for(Extractor* extractor: extractors) {
+    for (Extractor *extractor: extractors) {
         endFund += extractor->getFund();
         endFund += extractor->getAmountPaidToMiners();
     }
 
-    for(Factory* factory: factories) {
+    for (Factory *factory: factories) {
         endFund += factory->getFund();
         endFund += factory->getAmountPaidToWorkers();
     }
 
-    for(Wholesale* wholesale : wholesalers) {
+    for (Wholesale *wholesale: wholesalers) {
         endFund += wholesale->getFund();
     }
 
@@ -167,7 +166,6 @@ void Utils::run() {
     semEnd.release();
 }
 
-QString Utils::getFinalReport()
-{
+QString Utils::getFinalReport() {
     return finalReport;
 }

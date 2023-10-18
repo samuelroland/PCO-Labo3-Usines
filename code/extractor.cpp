@@ -2,11 +2,10 @@
 #include "costs.h"
 #include <pcosynchro/pcothread.h>
 
-WindowInterface* Extractor::interface = nullptr;
+WindowInterface *Extractor::interface = nullptr;
 
 Extractor::Extractor(int uniqueId, int fund, ItemType resourceExtracted)
-    : Seller(fund, uniqueId), resourceExtracted(resourceExtracted), nbExtracted(0)
-{
+    : Seller(fund, uniqueId), resourceExtracted(resourceExtracted), nbExtracted(0) {
     assert(resourceExtracted == ItemType::Copper ||
            resourceExtracted == ItemType::Sand ||
            resourceExtracted == ItemType::Petrol);
@@ -48,7 +47,7 @@ void Extractor::run() {
         stocks[resourceExtracted] += 1;
         /* Message dans l'interface graphique */
         interface->consoleAppendText(uniqueId, QString("1 ") % getItemName(resourceExtracted) %
-                                     " has been mined");
+                                                       " has been mined");
         /* Update de l'interface graphique */
         interface->updateFund(uniqueId, money);
         interface->updateStock(uniqueId, &stocks);
@@ -72,8 +71,8 @@ void Extractor::setInterface(WindowInterface *windowInterface) {
     interface = windowInterface;
 }
 
-SandExtractor::SandExtractor(int uniqueId, int fund): Extractor::Extractor(uniqueId, fund, ItemType::Sand) {}
+SandExtractor::SandExtractor(int uniqueId, int fund) : Extractor::Extractor(uniqueId, fund, ItemType::Sand) {}
 
-CopperExtractor::CopperExtractor(int uniqueId, int fund): Extractor::Extractor(uniqueId, fund, ItemType::Copper) {}
+CopperExtractor::CopperExtractor(int uniqueId, int fund) : Extractor::Extractor(uniqueId, fund, ItemType::Copper) {}
 
-PetrolExtractor::PetrolExtractor(int uniqueId, int fund): Extractor::Extractor(uniqueId, fund, ItemType::Petrol) {}
+PetrolExtractor::PetrolExtractor(int uniqueId, int fund) : Extractor::Extractor(uniqueId, fund, ItemType::Petrol) {}
