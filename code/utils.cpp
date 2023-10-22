@@ -1,8 +1,10 @@
 #include "utils.h"
 
+bool requestStop = false;
 
 void Utils::endService() {
     // TODO
+	requestStop = true;
     std::cout << "It's time to end !" << std::endl;
 }
 

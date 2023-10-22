@@ -5,6 +5,8 @@
 #include <iostream>
 #include <pcosynchro/pcothread.h>
 
+extern bool requestStop;
+
 WindowInterface *Factory::interface = nullptr;
 
 
@@ -71,7 +73,7 @@ void Factory::run() {
     }
     interface->consoleAppendText(uniqueId, "[START] Factory routine");
 
-    while (true /* TODO terminaison*/) {
+    while (!requestStop) {
         if (verifyResources()) {
             buildItem();
         } else {

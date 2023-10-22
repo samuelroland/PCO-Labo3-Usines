@@ -4,6 +4,8 @@
 #include <iostream>
 #include <pcosynchro/pcothread.h>
 
+extern bool requestStop;
+
 WindowInterface *Wholesale::interface = nullptr;
 
 Wholesale::Wholesale(int uniqueId, int fund)
@@ -46,7 +48,7 @@ void Wholesale::run() {
     }
 
     interface->consoleAppendText(uniqueId, "[START] Wholesaler routine");
-    while (true /* TODO terminaison*/) {
+    while (!requestStop) {
         buyResources();
         interface->updateFund(uniqueId, money);
         interface->updateStock(uniqueId, &stocks);
