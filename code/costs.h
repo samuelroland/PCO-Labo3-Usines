@@ -13,4 +13,13 @@
 #define PLASTURGIST_COST 5
 #define ENGINEER_COST 7
 
+//TODO: move this to another global place
+//If GTEST_CONTEXT is enabled (when running Google Test tests), disable the instruction.
+// NTEST means "NOT IN TESTING"
+#ifdef GTEST_CONTEXT
+#define NTEST(INSTRUCTION)
+#else
+#define NTEST(INSTRUCTION) INSTRUCTION
+#endif
+
 #endif// COSTS_H
