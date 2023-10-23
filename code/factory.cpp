@@ -16,15 +16,15 @@ Factory::Factory(int uniqueId, int fund, ItemType builtItem, std::vector<ItemTyp
            builtItem == ItemType::Plastic ||
            builtItem == ItemType::Robot);
 
-    interface->updateFund(uniqueId, fund);
-    interface->consoleAppendText(uniqueId, "Factory created");
+    NTEST(interface->updateFund(uniqueId, fund));
+    NTEST(interface->consoleAppendText(uniqueId, "Factory created"));
 }
 
 void Factory::setWholesalers(std::vector<Wholesale *> wholesalers) {
     Factory::wholesalers = wholesalers;
 
     for (Seller *seller: wholesalers) {
-        interface->setLink(uniqueId, seller->getUniqueId());
+        NTEST(interface->setLink(uniqueId, seller->getUniqueId()));
     }
 }
 
@@ -55,7 +55,7 @@ void Factory::buildItem() {
 
     // TODO
 
-    interface->consoleAppendText(uniqueId, "Factory have build a new object");
+    NTEST(interface->consoleAppendText(uniqueId, "Factory have build a new object"));
 }
 
 void Factory::orderResources() {
@@ -71,7 +71,7 @@ void Factory::run() {
         std::cerr << "You have to give to factories wholesalers to sales their resources" << std::endl;
         return;
     }
-    interface->consoleAppendText(uniqueId, "[START] Factory routine");
+    NTEST(interface->consoleAppendText(uniqueId, "[START] Factory routine"));
 
     while (!requestStop) {
         if (verifyResources()) {
@@ -79,10 +79,10 @@ void Factory::run() {
         } else {
             orderResources();
         }
-        interface->updateFund(uniqueId, money);
-        interface->updateStock(uniqueId, &stocks);
+        NTEST(interface->updateFund(uniqueId, money));
+        NTEST(interface->updateStock(uniqueId, &stocks));
     }
-    interface->consoleAppendText(uniqueId, "[STOP] Factory routine");
+    NTEST(interface->consoleAppendText(uniqueId, "[STOP] Factory routine"));
 }
 
 std::map<ItemType, int> Factory::getItemsForSale() {

@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
     Wholesale::setInterface(interface);
 
     Utils utils = Utils(NB_EXTRACTOR, NB_FACTORIES, NB_WHOLESALER);
-    interface->setUtils(&utils);
+    NTEST(interface->setUtils(&utils));
 
     return a.exec();
 }

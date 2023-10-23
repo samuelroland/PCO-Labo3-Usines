@@ -11,8 +11,8 @@ Extractor::Extractor(int uniqueId, int fund, ItemType resourceExtracted)
     assert(resourceExtracted == ItemType::Copper ||
            resourceExtracted == ItemType::Sand ||
            resourceExtracted == ItemType::Petrol);
-    interface->consoleAppendText(uniqueId, QString("Mine Created"));
-    interface->updateFund(uniqueId, fund);
+    NTEST(interface->consoleAppendText(uniqueId, QString("Mine Created")));
+    NTEST(interface->updateFund(uniqueId, fund));
 }
 
 std::map<ItemType, int> Extractor::getItemsForSale() {
@@ -26,7 +26,7 @@ int Extractor::trade(ItemType it, int qty) {
 }
 
 void Extractor::run() {
-    interface->consoleAppendText(uniqueId, "[START] Mine routine");
+    NTEST(interface->consoleAppendText(uniqueId, "[START] Mine routine"));
 
     while (!requestStop) {
         /* TODO concurrence */
@@ -48,13 +48,13 @@ void Extractor::run() {
         /* Incrément des stocks */
         stocks[resourceExtracted] += 1;
         /* Message dans l'interface graphique */
-        interface->consoleAppendText(uniqueId, QString("1 ") % getItemName(resourceExtracted) %
-                                                       " has been mined");
+        NTEST(interface->consoleAppendText(uniqueId, QString("1 ") % getItemName(resourceExtracted) %
+                                                             " has been mined"));
         /* Update de l'interface graphique */
-        interface->updateFund(uniqueId, money);
-        interface->updateStock(uniqueId, &stocks);
+        NTEST(interface->updateFund(uniqueId, money));
+        NTEST(interface->updateStock(uniqueId, &stocks));
     }
-    interface->consoleAppendText(uniqueId, "[STOP] Mine routine");
+    NTEST(interface->consoleAppendText(uniqueId, "[STOP] Mine routine"));
 }
 
 int Extractor::getMaterialCost() {

@@ -10,15 +10,15 @@ WindowInterface *Wholesale::interface = nullptr;
 
 Wholesale::Wholesale(int uniqueId, int fund)
     : Seller(fund, uniqueId) {
-    interface->updateFund(uniqueId, fund);
-    interface->consoleAppendText(uniqueId, "Wholesaler Created");
+    NTEST(interface->updateFund(uniqueId, fund));
+    NTEST(interface->consoleAppendText(uniqueId, "Wholesaler Created"));
 }
 
 void Wholesale::setSellers(std::vector<Seller *> sellers) {
     this->sellers = sellers;
 
     for (Seller *seller: sellers) {
-        interface->setLink(uniqueId, seller->getUniqueId());
+        NTEST(interface->setLink(uniqueId, seller->getUniqueId()));
     }
 }
 
@@ -35,8 +35,8 @@ void Wholesale::buyResources() {
     int qty = rand() % 5 + 1;
     int price = qty * getCostPerUnit(i);
 
-    interface->consoleAppendText(uniqueId, QString("I would like to buy %1 of ").arg(qty) %
-                                                   getItemName(i) % QString(" which would cost me %1").arg(price));
+    NTEST(interface->consoleAppendText(uniqueId, QString("I would like to buy %1 of ").arg(qty) %
+                                                         getItemName(i) % QString(" which would cost me %1").arg(price)));
     /* TODO */
 }
 
@@ -47,15 +47,15 @@ void Wholesale::run() {
         return;
     }
 
-    interface->consoleAppendText(uniqueId, "[START] Wholesaler routine");
+    NTEST(interface->consoleAppendText(uniqueId, "[START] Wholesaler routine"));
     while (!requestStop) {
         buyResources();
-        interface->updateFund(uniqueId, money);
-        interface->updateStock(uniqueId, &stocks);
+        NTEST(interface->updateFund(uniqueId, money));
+        NTEST(interface->updateStock(uniqueId, &stocks));
         //Temps de pause pour espacer les demandes de ressources
         PcoThread::usleep((rand() % 10 + 1) * 100000);
     }
-    interface->consoleAppendText(uniqueId, "[STOP] Wholesaler routine");
+    NTEST(interface->consoleAppendText(uniqueId, "[STOP] Wholesaler routine"));
 }
 
 std::map<ItemType, int> Wholesale::getItemsForSale() {
