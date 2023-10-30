@@ -62,8 +62,8 @@ void Extractor::run() {
         PcoThread::usleep((rand() % 100 + 1) * 10000);
 
         /* Statistiques */
-        mutex.lock();
         nbExtracted++;
+        mutex.lock();
         /* Incrément des stocks */
         stocks[resourceExtracted] += 1;
         mutex.unlock();

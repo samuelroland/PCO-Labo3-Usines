@@ -16,7 +16,7 @@ This report documents our strategies in implementing solutions to tackle these i
 ### Extractors
     - Competition Management in *extractor::run*
 
-    It's necessary to acquire the instance's mutex in two steps to ensure that the current thread is the only one modifying the amount of money during the miner's payment and, later on, the number of extractions and the modification of the stock. These instructions need protection because other threads might attempt to modify these variables simultaneously (for example, a call to trade() by another thread that could try to access money and stocks).
+    It's necessary to acquire the instance's mutex in two steps to ensure that the current thread is the only one modifying the amount of money during the miner's payment and, later on, the modification of the stock. These instructions need protection because other threads might attempt to modify these variables simultaneously (for example, a call to trade() by another thread that could try to access money and stocks).
     
     - *Extractor::trade*
 
