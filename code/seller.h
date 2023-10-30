@@ -6,6 +6,7 @@
 #include <QStringBuilder>
 #include <map>
 #include <vector>
+#include <pcosynchro/pcomutex.h>
 
 enum class ItemType { Sand,
                       Copper,
@@ -65,6 +66,8 @@ public:
     int getFund() { return money; }
 
     int getUniqueId() { return uniqueId; }
+
+    PcoMutex mutex;
 
 protected:
     /**
