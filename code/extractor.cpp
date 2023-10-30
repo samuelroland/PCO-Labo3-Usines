@@ -29,7 +29,7 @@ void Extractor::run() {
     NTEST(interface->consoleAppendText(uniqueId, "[START] Mine routine"));
 
     while (!requestStop) {
-        /* TODO concurrence */
+        /* (TODO) concurrence OK */
 
         int minerCost = getEmployeeSalary(getEmployeeThatProduces(resourceExtracted));
         if (money < minerCost) {
@@ -40,13 +40,20 @@ void Extractor::run() {
         }
 
         /* On peut payer un mineur */
+        mutex.lock();
         money -= minerCost;
+        mutex.unlock();
+
         /* Temps aléatoire borné qui simule le mineur qui mine */
         PcoThread::usleep((rand() % 100 + 1) * 10000);
+
         /* Statistiques */
+        mutex.lock();
         nbExtracted++;
         /* Incrément des stocks */
         stocks[resourceExtracted] += 1;
+        mutex.unlock();
+
         /* Message dans l'interface graphique */
         NTEST(interface->consoleAppendText(uniqueId, QString("1 ") % getItemName(resourceExtracted) %
                                                              " has been mined"));
