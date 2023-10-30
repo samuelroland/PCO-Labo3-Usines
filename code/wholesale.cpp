@@ -72,6 +72,21 @@ std::map<ItemType, int> Wholesale::getItemsForSale() {
 int Wholesale::trade(ItemType it, int qty) {
 
     // TODO
+    mutex.lock();
+    if(qty > 0 && stocks[it] >= qty){
+        //mettre à jour les stocks & les fonds
+        stocks[it] -= qty;
+        interface->updateStock(uniqueId, &stocks);
+
+        int tradeProfit = getCostPerUnit(it) * qty;
+        money += tradeProfit;
+        interface->updateFund(uniqueId, money);
+
+        mutex.unlock();
+        return tradeProfit;
+    }
+
+    mutex.unlock();
 
     return 0;
 }
