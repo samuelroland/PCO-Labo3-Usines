@@ -5,6 +5,10 @@ Authors: Vitória Oliveira et Samuel Roland
 ## Introduction
 This project consists in a sales simulation application with extractors, wholesalers and factories. They are constantly selling and/or buying resources from/to other entities. The program has a UI that shows in real time the ressources and funds of each entity.
 
+The primary goal of this project is to effectively address problems associated to concurrent access such as the protection of shared resources. 
+
+This report documents our strategies in implementing solutions to tackle these issues. 
+
 ## Description of software features
 
 ## Implementation Choices
