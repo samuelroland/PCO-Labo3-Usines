@@ -40,6 +40,11 @@ This report documents our strategies in implementing solutions to tackle these i
     To take this in account elsewhere in the project, we've added a while loop that checks if *stopRequest* is true in all run functions for each Seller subclass.    
     
 ## Tests
+To avoid needing to setup a Qt UI interface just to do unit tests, we decided to disable any usage of the `interface` attribute so we don't call `setInterface`. (Therefore the attribute `interface` is `NULLPTR` in tests). We created a macro `NTEST` used like `NTEST(interface...)` that doesn't run the given instruction in case the `GTEST` variable has been defined. This is kind of a "headless" mode.
+
+To run unit test, we setup a each entity with fakes entities requesting trades and accepted trades against it so we can validate the concurrency protections are effective.
+
+To run end to end test, we create a `Utils` object and call its `run` method to start and `externalEndService` method to end.
 
 ## Conclusion
 
