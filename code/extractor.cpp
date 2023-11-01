@@ -22,7 +22,7 @@ std::map<ItemType, int> Extractor::getItemsForSale() {
 int Extractor::trade(ItemType it, int qty) {
     // TODO
     mutex.lock();
-    if(qty > 0 && stocks[it] >= qty && it == getResourceMined()){
+    if (qty > 0 && it == getResourceMined() && stocks[it] >= qty) {
         //mettre à jour les stocks & les fonds
         stocks[it] -= qty;
         interface->updateStock(uniqueId, &stocks);
