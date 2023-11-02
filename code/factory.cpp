@@ -81,9 +81,30 @@ void Factory::buildItem() {
 void Factory::orderResources() {
 
     // TODO - Itérer sur les resourcesNeeded et les wholesalers disponibles
+    for (ItemType it : resourcesNeeded){
+        int price = getCostPerUnit(it);
+
+        /* Si stocks[item] = 0 et on a assez d'argent*/
+        mutex.lock();
+        if(!stocks[it] && money >= price){
+
+            /* On regarde lequel des wholesaler peut nous fournir le produit */
+            for(Wholesale *w : wholesalers){
+                if(w->trade(it, 1)){
+                    money -= price;
+                    interface->updateFund(uniqueId, money);
+                    stocks[it] += 1;
+                    interface->updateStock(uniqueId, &stocks);
+                    break;
+                }
+            }
+        }
+        mutex.unlock();
+    }
 
     //Temps de pause pour éviter trop de demande
     PcoThread::usleep(10 * 100000);
+
 }
 
 void Factory::run() {
