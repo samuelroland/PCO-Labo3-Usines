@@ -50,10 +50,26 @@ void Factory::buildItem() {
 
     // TODO
 
+    /* Vérification  des fonds et du stock nécessaire pour produire l'objet */
+    int itemCost = getEmployeeSalary(getEmployeeThatProduces(itemBuilt));
+    if(itemCost > money || !verifyResources()){
+        return;
+    }
+
     //Temps simulant l'assemblage d'un objet.
     PcoThread::usleep((rand() % 100) * 100000);
 
     // TODO
+    mutex.lock();
+    money -= itemCost;
+    nbBuild++;
+    /* Incrément des stocks de l'article produit */
+    stocks[itemBuilt] += 1;
+    /* Decrémenter le stock des matériaux utilisés */
+    for (ItemType item : resourcesNeeded){
+        stocks[item] -= 1;
+    }
+    mutex.unlock();
 
     NTEST(interface->consoleAppendText(uniqueId, "Factory have build a new object"));
 }
