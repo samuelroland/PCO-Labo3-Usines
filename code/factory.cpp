@@ -62,14 +62,18 @@ void Factory::buildItem() {
     // TODO
     mutex.lock();
     money -= itemCost;
-    nbBuild++;
+
     /* Incrément des stocks de l'article produit */
+    nbBuild++;
     stocks[itemBuilt] += 1;
     /* Decrémenter le stock des matériaux utilisés */
     for (ItemType item : resourcesNeeded){
         stocks[item] -= 1;
     }
     mutex.unlock();
+
+    interface->updateFund(uniqueId, money);
+    interface->updateStock(uniqueId, &stocks);
 
     NTEST(interface->consoleAppendText(uniqueId, "Factory have build a new object"));
 }
