@@ -132,7 +132,22 @@ std::map<ItemType, int> Factory::getItemsForSale() {
 
 int Factory::trade(ItemType it, int qty) {
     // TODO
-    return 0;
+
+    mutex.lock();
+    if(qty <= 0 || stocks[it] < qty){
+        mutex.unlock();
+        return 0;
+    }
+
+    stocks[it] -= qty;
+    interface->updateStock(uniqueId, &stocks);
+
+    int tradeProfit = getMaterialCost() * qty;
+    money += tradeProfit;
+    interface->updateFund(uniqueId, money);
+
+    mutex.unlock();
+    return tradeProfit;
 }
 
 int Factory::getAmountPaidToWorkers() {
