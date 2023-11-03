@@ -13,43 +13,23 @@ This report documents our strategies in implementing solutions to tackle these i
 
 ## Implementation Choices
 
-### Mutex
-    /* (TODO à effacer) QUESTION: MULTIPLE THREADS? ... */
-The main problem of this project is to safeguard resources of a instance that might be accessed by multiple threads/functions simutaneaously. More precisely, we've focused on protecting the stocks and funds of each Seller object as these variables are modify everytime Sellers build, buy and sell items to each other. 
-    /* (TODO à effacer)  POURQUOI MUTEX EST PROTECTED ET DECLARE DANS SELLER */
-In order to do so, we've implemented a protected access mutex in Seller's class. This allows each subclass to have it's own exclusive mutex, ensuring that no other object can access it. This prevents data race conditions, where multiple functions within an object might attempt to access these resources concurrently.
-
-    /* (TODO à effacer) INTERET DE CHAQUE OBJET D'AVOIR UN SEUL MUTEX PAR RESOURCE A PROTEGER */
-As multiple functions in each object might try to access these ressources at the same time, we've chosen to implement a single mutex for each resource to be secured as a way to ensure data integrity. This mutex was acquired  whenever we read or write to the money or stocks and is released once the operation is completed.
-
-    /* (TODO à effacer) POURQUOI UN MUTEX POUR MONEY/STOCK ET PAS UN POUR CHAQUE RESOURCE */
-However, for our specific project requirements, we observed that money and stocks were consistently read and written to within the same block of instructions. To simplify our implementation and enhance performance, we opted for a single mutex to protect both variables.
-
-    /* (TODO à effacer) NECESSAIRE? */
-It's essential to note that whenever a resource is read and modified right after, this should be done without releasing the mutex inbetween these instructions. Doing so would introduce the possibility of another thread or function modifying the resource, potentially leading to incoherent results. Our chosen design ensures that resource access and modification occur atomically within the same critical section of code, preserving data integrity.
-
-
-/* EN FAIT, JSP SI C'EST JUSTE CE QUI EST CI-DESSOUS, A VOIR SI ON LE LE JETTE OU ON LE GARDE (ET VOIR OU LE METTRE) */
-There is one important point to understand here: stocks and funds can only be modified by its owner as they are private variables. But, it is important to notice that, an object can ask for another to "change" its resources; this is done by the trade function. This function allows a thread to "communicate" with another. 
 
 ### Extractors
-    - Competition Management in *extractor::run*
+**Competition Management in *extractor::run***  
+It's necessary to acquire the instance's mutex in two steps to ensure that the current thread is the only one modifying the amount of money during the miner's payment and, later on, the modification of the stock. These instructions need protection because other threads might attempt to modify these variables simultaneously (for example, a call to trade() by another thread that could try to access money and stocks).
 
-    It's necessary to acquire the instance's mutex in two steps to ensure that the current thread is the only one modifying the amount of money during the miner's payment and, later on, the modification of the stock. These instructions need protection because other threads might attempt to modify these variables simultaneously (for example, a call to trade() by another thread that could try to access money and stocks).
-    
-    - * Extractor::trade *
+***Extractor::trade***  
+First, it's essential to check the arguments to proceed with the transaction. A check to certify that the requested quantity is greater than 0 is made; otherwise, it would not be logical neither necessary to carry out the transaction. It is also essential to verify that the requested item matches the item sold by the extractor and that the extractor has the requested quantity.
 
-    First, it's essential to check the arguments to proceed with the transaction. A check to certify that the requested quantity is greater than 0 is made; otherwise, it would not be logical neither necessary to carry out the transaction. It is also essential to verify that the requested item matches the item sold by the extractor and that the extractor has the requested quantity.
-
-    Once this is done, we can proceed with the transaction. Therefore, we need to update the seller's stock and funds.
-    Since multiple threads can attempt to perform transactions simultaneously, we need to manage concurrency. Since a stock check is performed before starting the transaction, it is vital to lock a mutex before this check is made to ensure that the updated stock corresponds to the stock previously returned and that no other threads have been able to change it between these two instructions.
+Once this is done, we can proceed with the transaction. Therefore, we need to update the seller's stock and funds.
+Since multiple threads can attempt to perform transactions simultaneously, we need to manage concurrency. Since a stock check is performed before starting the transaction, it is vital to lock a mutex before this check is made to ensure that the updated stock corresponds to the stock previously returned and that no other threads have been able to change it between these two instructions.
 
 ### Wholesales
-    - *Wholesale::buyResources*
-    To start with, it is fundamental to acquire a mutex prior to verifying the availability of the wholesale's financial resources and confirming the feasibility of the trade through a call to the seller's trade function. This is necessary to prevent a potential interference by another thread that may alter the wholesale's finances or the seller's inventory. Once this is done, we can proceed and update the wholesale's funds and inventory,  after which the mutex can be released. 
+***Wholesale::buyResources***  
+To start with, it is fundamental to acquire a mutex prior to verifying the availability of the wholesale's financial resources and confirming the feasibility of the trade through a call to the seller's trade function. This is necessary to prevent a potential interference by another thread that may alter the wholesale's finances or the seller's inventory. Once this is done, we can proceed and update the wholesale's funds and inventory,  after which the mutex can be released. 
 
-    - *Wholesale::trade()*
-    Similar to Extractor::trade, except for the conditions to proceed with the trade. It is necessary to check if the requested quantity is strictly positive or if this quantity for the wanted item is available in stock.
+***Wholesale::trade()***  
+Similar to Extractor::trade, except for the conditions to proceed with the trade. It is necessary to check if the requested quantity is strictly positive or if this quantity for the wanted item is available in stock.
 
 ### Factories
     - *Factory::buildItem*
@@ -61,15 +41,18 @@ There is one important point to understand here: stocks and funds can only be mo
     - *Factory::trade*
     /* TODO */
 
- ### Termination 
-    In order to ensure a proper termination of the simulation, we've declared a boolean variable called *stopRequest* in the file *Utils.cpp* that serves as signal to indicate if a request to end the simulation has been made. 
-    This variable is initially set to false and is set to true if a call to *Utils::endService()* is made (when the window is closed).
+### Termination 
+In order to ensure a proper termination of the simulation, we've declared a boolean variable called *stopRequest* in the file *Utils.cpp* that serves as signal to indicate if a request to end the simulation has been made. 
+This variable is initially set to false and is set to true if a call to *Utils::endService()* is made (when the window is closed).
 
-    To take this in account elsewhere in the project, we've added a while loop that checks if *stopRequest* is true in all run functions for each Seller subclass.   
+To take this in account elsewhere in the project, we've added a while loop that checks if *stopRequest* is true in all run functions for each Seller subclass.    
 
-    /* TODO appeler requestStop de pcothread */
-    
 ## Tests
+To avoid needing to setup a Qt UI interface just to do unit tests, we decided to disable any usage of the `interface` attribute so we don't call `setInterface`. (Therefore the attribute `interface` is `NULLPTR` in tests). We created a macro `NTEST` used like `NTEST(interface...)` that doesn't run the given instruction in case the `GTEST` variable has been defined. This is kind of a "headless" mode.
+
+To run unit test, we setup a each entity with fakes entities requesting trades and accepted trades against it so we can validate the concurrency protections are effective.
+
+To run end to end test, we create a `Utils` object and call its `run` method to start and `externalEndService` method to end.
 
 ## Conclusion
 
