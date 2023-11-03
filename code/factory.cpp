@@ -75,7 +75,7 @@ void Factory::buildItem() {
     interface->updateFund(uniqueId, money);
     interface->updateStock(uniqueId, &stocks);
 
-    NTEST(interface->consoleAppendText(uniqueId, "Factory have build a new object"));
+    NTEST(interface->consoleAppendText(uniqueId, QString("1 ")  % getItemName(itemBuilt) %  " has been built"));
 }
 
 void Factory::orderResources() {
@@ -84,6 +84,12 @@ void Factory::orderResources() {
     for (ItemType it : resourcesNeeded){
         int price = getCostPerUnit(it);
 
+        /*
+        NTEST(interface->consoleAppendText(uniqueId, QString("I would like to buy 1 of ") % getItemName(it)
+                                           % QString(" which would cost me %1").arg(price)));
+        */
+
+        /* TODO (OK) */
         /* Si stocks[item] = 0 et on a assez d'argent*/
         mutex.lock();
         if(!stocks[it] && money >= price){
@@ -95,6 +101,11 @@ void Factory::orderResources() {
                     interface->updateFund(uniqueId, money);
                     stocks[it] += 1;
                     interface->updateStock(uniqueId, &stocks);
+
+                    NTEST(interface->consoleAppendText(uniqueId, QString("I have bought 1 of ") % getItemName(it)
+                                                       % QString(" at wholesaler %1").arg(w->getUniqueId())
+                                                       % QString(" which would costed me %1").arg(price)));
+
                     break;
                 }
             }
