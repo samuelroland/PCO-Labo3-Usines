@@ -67,8 +67,6 @@ public:
 
     int getUniqueId() { return uniqueId; }
 
-    PcoMutex mutex;
-
 protected:
     /**
      * @brief stocks : Type, Quantité
@@ -76,6 +74,8 @@ protected:
     std::map<ItemType, int> stocks;
     int money;
     int uniqueId;
+    PcoMutex mutex;
+
 };
 
 #endif// SELLER_H
