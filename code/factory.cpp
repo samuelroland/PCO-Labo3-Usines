@@ -85,11 +85,13 @@ void Factory::orderResources() {
                                            % QString(" which would cost me %1").arg(price)));
         */
 
+        //Prendre le premier élément du stock qui est à zéro (pour l'acheter en priorité)
         mutex.lock();
         if (!stocks[it] && money >= price) {
-
             /* On regarde lequel des wholesaler peut nous fournir le produit */
-            for (Wholesale *w: wholesalers) {
+            auto wholesalersCopy = wholesalers;
+            shuffle(wholesalersCopy.begin(), wholesalersCopy.end(), std::default_random_engine{});
+            for (Wholesale *w: wholesalersCopy) {
                 if (w->trade(it, 1)) {
                     money -= price;
                     NTEST(interface->updateFund(uniqueId, money));
