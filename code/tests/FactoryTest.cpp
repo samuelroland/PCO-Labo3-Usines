@@ -15,7 +15,9 @@
 #define GTEST
 
 const int FAKE_SELLER_FUNDS = 100;
+static volatile bool massiveTradeIsDone;
 class FakeWholeSeller : public Wholesale {
+
 public:
     ItemType lastTradeType = ItemType::Nothing;
     int lastTradeQty = 0;
@@ -25,6 +27,7 @@ public:
 
     FakeWholeSeller(std::map<ItemType, int> stocks = {{}}) : Wholesale(FAKE_SELLER_FUNDS, 1) {
         this->stocks = stocks;
+        massiveTradeIsDone = false;
     }
 
     int trade(ItemType what, int qty) {
@@ -41,12 +44,16 @@ public:
         if (target == nullptr) throw std::logic_error("target is null");
         std::cout << "hell from thread !!";
         int tradeRes;
-        while (!PcoThread::thisThread()->stopRequested()) {
+        while (!PcoThread::thisThread()->stopRequested() && !massiveTradeIsDone) {
             tradeRes = target->trade(it, 1);
+            PcoThread::usleep(20);
             std::cout << "tried a trade..." << tradeRes << std::endl;
             if (tradeRes) {
                 totalMoneySpent += tradeRes;
                 totalItemNumbersBought++;
+            } else {
+                massiveTradeIsDone = true;
+                return;
             }
         }
     }
@@ -90,8 +97,6 @@ TEST(Factory, CanBuyNeededResourcesToWholesalers) {
     EXPECT_EQ(pf.getFund(), FACTORIES_FUND - PETROL_COST);
 }
 
-//TODO: can build item
-
 TEST(Factory, CanBuildItemWhenItHasRessources) {
     RobotFactory rf(1, FACTORIES_FUND);
     ASSERT_EQ(rf.getStocks().size(), 0);
@@ -101,15 +106,17 @@ TEST(Factory, CanBuildItemWhenItHasRessources) {
 
     //Wait on the robot factory to build a robot
     std::unique_ptr<PcoThread> factoryThread;
+    FakeWholeSeller fs({{ItemType::Petrol, 2}});
+    rf.setWholesalers({&fs});
     factoryThread = std::make_unique<PcoThread>(&RobotFactory::run, &rf);
-    // while (rf.getStocks().at(ItemType::Robot) == 0) {}
-    // PcoThread::usleep(3000000);
+    while (rf.getStocks().at(ItemType::Robot) == 0) {}
+
     factoryThread->requestStop();
     factoryThread->join();
 
     //Make sure the factory has the correct money and stocks after the building and the sale
     EXPECT_EQ(rf.getStocks().at(ItemType::Robot), 1);
-    EXPECT_EQ(rf.getStocks().at(ItemType::Chip), 2);
+    EXPECT_EQ(rf.getStocks().at(ItemType::Chip), 1);
     EXPECT_EQ(rf.getStocks().at(ItemType::Plastic), 2);
     EXPECT_EQ(rf.getFund(), FACTORIES_FUND - ENGINEER_COST);
 }
@@ -125,43 +132,63 @@ TEST(Factory, InvalidTradeIsImpossible) {
     EXPECT_EQ(pf.getFund(), FACTORIES_FUND);
 }
 
-TEST(Factory, ConcurrentTradesAreManaged) {
-    std::cout << "hell there !!" << std::endl;
+void runMassiveTrades(Seller &seller, ItemType it, const int originalQuantity, const int cost) {
     const int SELLERS_NUMBER = 8;
     std::vector<std::unique_ptr<PcoThread>> threads;
     std::vector<FakeWholeSeller *> wholesellers;
-
-    PlasticFactory pf(1, FACTORIES_FUND);
-    pf.setStocks({{ItemType::Plastic, 1000}});
 
     for (int i = 0; i < SELLERS_NUMBER; ++i) {
         wholesellers.push_back(new FakeWholeSeller());
     }
 
     for (size_t i = 0; i < SELLERS_NUMBER; ++i) {
-        wholesellers[i]->target = &pf;
-        threads.emplace_back(std::make_unique<PcoThread>(&FakeWholeSeller::massiveTrade, wholesellers[i], ItemType::Plastic));
+        wholesellers[i]->target = &seller;
+        threads.emplace_back(std::make_unique<PcoThread>(&FakeWholeSeller::massiveTrade, wholesellers[i], it));
     }
-    while (pf.getStocks().at(ItemType::Plastic) > 0) {}
-    std::cout << "no more plastic in stock.." << std::endl;
+
+    //Wait until there is no left stock in the seller
+    while (seller.getStocks().at(it) > 0) {}
 
     for (auto &thread: threads) {
         thread->requestStop();
     }
+    std::cout << "requested stop to all..." << std::endl;
 
     for (auto &thread: threads) {
         thread->join();
     }
-    EXPECT_EQ(pf.getStocks().at(ItemType::Plastic), 0);
-    EXPECT_EQ(pf.getFund(), FACTORIES_FUND + 1000 * PLASTIC_COST);
+
+    //Final checks
     int totalMoneySpent = 0;
     int totalItemNumbersBought = 0;
     for (size_t i = 0; i < SELLERS_NUMBER; ++i) {
         totalMoneySpent += wholesellers[i]->totalMoneySpent;
         totalItemNumbersBought += wholesellers[i]->totalItemNumbersBought;
     }
-    EXPECT_EQ(1000 * PLASTIC_COST, totalMoneySpent);
-    EXPECT_EQ(1000, totalItemNumbersBought);
+    EXPECT_EQ(originalQuantity * cost, totalMoneySpent);
+    EXPECT_EQ(originalQuantity, totalItemNumbersBought);
+}
+
+TEST(Factory, ConcurrentTradesAreManaged) {
+    PlasticFactory pf(1, FACTORIES_FUND);
+    const int ORIGINAL_STOCK = 20000;
+    pf.setStocks({{ItemType::Plastic, ORIGINAL_STOCK}});
+
+    runMassiveTrades(pf, ItemType::Plastic, ORIGINAL_STOCK, PLASTIC_COST);
+
+    EXPECT_EQ(pf.getStocks().at(ItemType::Plastic), 0);
+    EXPECT_EQ(pf.getFund(), FACTORIES_FUND + ORIGINAL_STOCK * PLASTIC_COST);
+}
+
+TEST(Extractor, ConcurrentTradesAreManaged) {
+    CopperExtractor ce(1, FACTORIES_FUND);
+    const int ORIGINAL_STOCK = 10000;
+    ce.setStocks({{ItemType::Copper, ORIGINAL_STOCK}});
+
+    runMassiveTrades(ce, ItemType::Copper, ORIGINAL_STOCK, COPPER_COST);
+
+    EXPECT_EQ(ce.getStocks().at(ItemType::Copper), 0);
+    EXPECT_EQ(ce.getFund(), FACTORIES_FUND + ORIGINAL_STOCK * COPPER_COST);
 }
 
 TEST(EndToEnd, ExpectedMoneyEqualsFinalMoney) {

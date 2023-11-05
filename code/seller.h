@@ -85,6 +85,7 @@ private:
     FRIEND_TEST(Factory, CanBuildItemWhenItHasRessources);
     FRIEND_TEST(Factory, InvalidTradeIsImpossible);
     FRIEND_TEST(Factory, ConcurrentTradesAreManaged);
+    FRIEND_TEST(Extractor, ConcurrentTradesAreManaged);
     void setStocks(std::map<ItemType, int> stocks) { this->stocks = stocks; }
 };
 
