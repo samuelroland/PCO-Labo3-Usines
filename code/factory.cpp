@@ -139,7 +139,7 @@ std::map<ItemType, int> Factory::getItemsForSale() {
 }
 
 int Factory::trade(ItemType it, int qty) {
-    // TODO
+    if (it != getItemBuilt()) return 0;
 
     mutex.lock();
     if (qty <= 0 || stocks[it] < qty) {
