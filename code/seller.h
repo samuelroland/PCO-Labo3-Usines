@@ -4,9 +4,11 @@
 #include "costs.h"
 #include <QString>
 #include <QStringBuilder>
+#include <gtest/gtest.h>
+#include <gtest/gtest_prod.h>
 #include <map>
-#include <vector>
 #include <pcosynchro/pcomutex.h>
+#include <vector>
 
 enum class ItemType { Sand,
                       Copper,
@@ -63,6 +65,8 @@ public:
      */
     static ItemType chooseRandomItem(std::map<ItemType, int> &itemsForSale);
 
+    std::map<ItemType, int> getStocks() { return stocks; }
+
     int getFund() { return money; }
 
     int getUniqueId() { return uniqueId; }
@@ -76,6 +80,9 @@ protected:
     int uniqueId;
     PcoMutex mutex;
 
+private:
+    FRIEND_TEST(FactoryTrade, CanTradeItemsInStock);
+    void setStocks(std::map<ItemType, int> stocks) { this->stocks = stocks; }
 };
 
 #endif// SELLER_H
