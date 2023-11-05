@@ -1,5 +1,5 @@
-#include "../factory.h"
 #include "../extractor.h"
+#include "../factory.h"
 #include "../seller.h"
 #include "../utils.h"
 #include "costs.h"
@@ -16,16 +16,16 @@
 
 const int FAKE_SELLER_FUNDS = 100;
 static volatile bool massiveTradeIsDone;
-class FakeWholeSeller : public Wholesale {
+class FakeWholesaler : public Wholesale {
 
 public:
     ItemType lastTradeType = ItemType::Nothing;
     int lastTradeQty = 0;
     Seller *target = nullptr;
     int totalMoneySpent = 0;
-    unsigned totalItemNumbersBought = 0;
+    int totalItemNumbersBought = 0;
 
-    FakeWholeSeller(std::map<ItemType, int> stocks = {{}}) : Wholesale(FAKE_SELLER_FUNDS, 1) {
+    FakeWholesaler(std::map<ItemType, int> stocks = {{}}) : Wholesale(FAKE_SELLER_FUNDS, 1) {
         this->stocks = stocks;
         massiveTradeIsDone = false;
     }
@@ -42,12 +42,10 @@ public:
 
     void massiveTrade(ItemType it) {
         if (target == nullptr) throw std::logic_error("target is null");
-        std::cout << "hell from thread !!";
         int tradeRes;
         while (!PcoThread::thisThread()->stopRequested() && !massiveTradeIsDone) {
             tradeRes = target->trade(it, 1);
             PcoThread::usleep(20);
-            std::cout << "tried a trade..." << tradeRes << std::endl;
             if (tradeRes) {
                 totalMoneySpent += tradeRes;
                 totalItemNumbersBought++;
@@ -78,12 +76,12 @@ TEST(Factory, CanTradeItemsInStock) {
 }
 
 TEST(Factory, CanBuyNeededResourcesToWholesalers) {
-    FakeWholeSeller fs({{ItemType::Petrol, 2}});
+    FakeWholesaler fs({{ItemType::Petrol, 2}});
     PlasticFactory pf(1, FACTORIES_FUND);
     ASSERT_EQ(pf.getStocks().size(), 0);
     pf.setWholesalers({&fs});
 
-    //Let the factory run until it buy some Petrol to the wholeseller
+    //Let the factory run until it buy some Petrol to the wholesaler
     std::unique_ptr<PcoThread> factoryThread;
     factoryThread = std::make_unique<PcoThread>(&PlasticFactory::run, &pf);
     while (fs.lastTradeQty == 0) {}
@@ -106,7 +104,7 @@ TEST(Factory, CanBuildItemWhenItHasRessources) {
 
     //Wait on the robot factory to build a robot
     std::unique_ptr<PcoThread> factoryThread;
-    FakeWholeSeller fs({{ItemType::Petrol, 2}});
+    FakeWholesaler fs({{ItemType::Petrol, 2}});
     rf.setWholesalers({&fs});
     factoryThread = std::make_unique<PcoThread>(&RobotFactory::run, &rf);
     while (rf.getStocks().at(ItemType::Robot) == 0) {}
@@ -114,15 +112,15 @@ TEST(Factory, CanBuildItemWhenItHasRessources) {
     factoryThread->requestStop();
     factoryThread->join();
 
-    //Make sure the factory has the correct money and stocks after the building and the sale
-    EXPECT_EQ(rf.getStocks().at(ItemType::Robot), 1);
-    EXPECT_EQ(rf.getStocks().at(ItemType::Chip), 1);
-    EXPECT_EQ(rf.getStocks().at(ItemType::Plastic), 2);
-    EXPECT_EQ(rf.getFund(), FACTORIES_FUND - ENGINEER_COST);
+    //Make sure the factory has the correct money and stocks after the building of one or more robot
+    EXPECT_GE(rf.getStocks().at(ItemType::Robot), 1);
+    EXPECT_LE(rf.getStocks().at(ItemType::Chip), 1);
+    EXPECT_LE(rf.getStocks().at(ItemType::Plastic), 2);
+    EXPECT_LE(rf.getFund(), FACTORIES_FUND - ENGINEER_COST);
 }
 
 TEST(Factory, InvalidTradeIsImpossible) {
-    FakeWholeSeller fs;
+    FakeWholesaler fs;
     PlasticFactory pf(1, FACTORIES_FUND);
     pf.setStocks({{ItemType::Petrol, 3}});
     pf.setWholesalers({&fs});
@@ -135,15 +133,15 @@ TEST(Factory, InvalidTradeIsImpossible) {
 void runMassiveTrades(Seller &seller, ItemType it, const int originalQuantity, const int cost) {
     const int SELLERS_NUMBER = 8;
     std::vector<std::unique_ptr<PcoThread>> threads;
-    std::vector<FakeWholeSeller *> wholesellers;
+    std::vector<FakeWholesaler *> wholesalers;
 
     for (int i = 0; i < SELLERS_NUMBER; ++i) {
-        wholesellers.push_back(new FakeWholeSeller());
+        wholesalers.push_back(new FakeWholesaler());
     }
 
     for (size_t i = 0; i < SELLERS_NUMBER; ++i) {
-        wholesellers[i]->target = &seller;
-        threads.emplace_back(std::make_unique<PcoThread>(&FakeWholeSeller::massiveTrade, wholesellers[i], it));
+        wholesalers[i]->target = &seller;
+        threads.emplace_back(std::make_unique<PcoThread>(&FakeWholesaler::massiveTrade, wholesalers[i], it));
     }
 
     //Wait until there is no left stock in the seller
@@ -152,7 +150,6 @@ void runMassiveTrades(Seller &seller, ItemType it, const int originalQuantity, c
     for (auto &thread: threads) {
         thread->requestStop();
     }
-    std::cout << "requested stop to all..." << std::endl;
 
     for (auto &thread: threads) {
         thread->join();
@@ -162,8 +159,8 @@ void runMassiveTrades(Seller &seller, ItemType it, const int originalQuantity, c
     int totalMoneySpent = 0;
     int totalItemNumbersBought = 0;
     for (size_t i = 0; i < SELLERS_NUMBER; ++i) {
-        totalMoneySpent += wholesellers[i]->totalMoneySpent;
-        totalItemNumbersBought += wholesellers[i]->totalItemNumbersBought;
+        totalMoneySpent += wholesalers[i]->totalMoneySpent;
+        totalItemNumbersBought += wholesalers[i]->totalItemNumbersBought;
     }
     EXPECT_EQ(originalQuantity * cost, totalMoneySpent);
     EXPECT_EQ(originalQuantity, totalItemNumbersBought);

@@ -58,7 +58,7 @@ option(GTEST_CONTEXT, true)
 ## TODO: auto list all sources files except main.cpp (to avoid main() refedifinition)
 add_executable(
   tests
-  tests/FactoryTest.cpp
+  tests/tests.cpp
   display.cpp extractor.cpp factory.cpp mainwindow.cpp seller.cpp utils.cpp wholesale.cpp windowinterface.cpp
 )
 
