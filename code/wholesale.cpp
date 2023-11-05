@@ -35,7 +35,6 @@ void Wholesale::buyResources() {
 
     NTEST(interface->consoleAppendText(uniqueId, QString("I would like to buy %1 of ").arg(qty) %
                                                          getItemName(i) % QString(" which would cost me %1").arg(price)));
-    /* TODO (OK) */
     mutex.lock();
     if (price <= money && s->trade(i, qty)) {
         stocks[i] += qty;
@@ -67,8 +66,6 @@ std::map<ItemType, int> Wholesale::getItemsForSale() {
 }
 
 int Wholesale::trade(ItemType it, int qty) {
-
-    // TODO
     mutex.lock();
     if (qty > 0 && stocks[it] >= qty) {
         //mettre à jour les stocks & les fonds

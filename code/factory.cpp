@@ -48,8 +48,6 @@ bool Factory::verifyResources() {
 
 void Factory::buildItem() {
 
-    // TODO
-
     /* Vérification  des fonds et du stock nécessaire pour produire l'objet */
     int itemCost = getEmployeeSalary(getEmployeeThatProduces(itemBuilt));
     if (itemCost > money || !verifyResources()) {
@@ -59,7 +57,6 @@ void Factory::buildItem() {
     //Temps simulant l'assemblage d'un objet.
     PcoThread::usleep((rand() % 100) * 100000);
 
-    // TODO
     mutex.lock();
     money -= itemCost;
 
@@ -80,7 +77,6 @@ void Factory::buildItem() {
 
 void Factory::orderResources() {
 
-    // TODO - Itérer sur les resourcesNeeded et les wholesalers disponibles
     for (ItemType it: resourcesNeeded) {
         int price = getCostPerUnit(it);
 
@@ -89,8 +85,6 @@ void Factory::orderResources() {
                                            % QString(" which would cost me %1").arg(price)));
         */
 
-        /* TODO (OK) */
-        /* Si stocks[item] = 0 et on a assez d'argent*/
         mutex.lock();
         if (!stocks[it] && money >= price) {
 
