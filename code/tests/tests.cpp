@@ -190,9 +190,7 @@ TEST(Extractor, ConcurrentTradesAreManaged) {
 
 TEST(EndToEnd, ExpectedMoneyEqualsFinalMoney) {
     Utils utils = Utils(NB_EXTRACTOR, NB_FACTORIES, NB_WHOLESALER);
-    sleep(2);
+    sleep(5);
     utils.externalEndService();
-    // EXPECT_EQ(factory->getFund(), FACTORIES_FUND);
-    // Extractor e(0, 0, ItemType::Sand);
     EXPECT_EQ(utils.getFinalReport().toStdString(), "The expected fund is : 2000 and you got at the end : 2000");
 }
