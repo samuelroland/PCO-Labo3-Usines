@@ -2,8 +2,6 @@
 #include "costs.h"
 #include <pcosynchro/pcothread.h>
 
-extern bool requestStop;
-
 WindowInterface *Extractor::interface = nullptr;
 
 Extractor::Extractor(int uniqueId, int fund, ItemType resourceExtracted)
@@ -42,7 +40,7 @@ int Extractor::trade(ItemType it, int qty) {
 void Extractor::run() {
     NTEST(interface->consoleAppendText(uniqueId, "[START] Mine routine"));
 
-    while (!requestStop) {
+    while (!PcoThread::thisThread()->stopRequested()) {
         /* (TODO) concurrence OK */
 
         int minerCost = getEmployeeSalary(getEmployeeThatProduces(resourceExtracted));

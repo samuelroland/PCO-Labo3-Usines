@@ -1,10 +1,9 @@
 #include "utils.h"
 
-bool requestStop = false;
-
 void Utils::endService() {
-    // TODO
-	requestStop = true;
+    for (const auto &thread: threads) {
+        thread->requestStop();
+    }
     std::cout << "It's time to end !" << std::endl;
 }
 
