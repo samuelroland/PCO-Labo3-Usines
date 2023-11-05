@@ -66,11 +66,49 @@ This variable is initially set to false and is set to true if a call to *Utils::
 To take this in account elsewhere in the project, we've added a while loop that checks if *stopRequest* is true in all run functions for each Seller subclass.    
 
 ## Tests
-To avoid needing to setup a Qt UI interface just to do unit tests, we decided to disable any usage of the `interface` attribute so we don't call `setInterface`. (Therefore the attribute `interface` is `NULLPTR` in tests). We created a macro `NTEST` used like `NTEST(interface...)` that doesn't run the given instruction in case the `GTEST` variable has been defined. This is kind of a "headless" mode.
 
-To run unit test, we setup a each entity with fakes entities requesting trades and accepted trades against it so we can validate the concurrency protections are effective.
+**Manual tests**  
+After around 50 seconds of execution, here is the visual state. The 2 wholesalers have almost no funds left.
+![state-final.png](imgs/state-final.png)
+Closing the window show the final report with the expected final amount of money.
+![message-final.png](imgs/message-final.png)
 
-To run end to end test, we create a `Utils` object and call its `run` method to start and `externalEndService` method to end.
+**Automated tests**  
+Do to more advanced testing on logic and concurrency protections, we tried to write some GoogleTest tests, mostly in the form of integration tests. To avoid needing to setup a Qt UI interface, we disabled the usage of the `interface` attribute so we don't call `setInterface`. (Therefore the attribute `interface` is `NULLPTR` in tests). We created a macro `NTEST` used like this: `NTEST(interface...)` that doesn't run the given instruction in case the `GTEST` macro has been defined. This is kind of a "headless" mode. The interface is just a visualizer, we don't need them to test the logic and behaviors.
+
+We added a method `std::map<ItemType, int> getStocks()` on the `Seller` class so we can make assertions on the final stocks in addition to the money with `getFund()`. We created a setter too `void setStocks(std::map<ItemType, int> stocks)` but we put its visibility in `protected` and the each test that need its access is a friend of the method.
+
+Each test has different needs. In some case we don't need to run object in threads, we for example just want to test that `trade()` only accept the trade when the entity has a stock and can sell the asked resource. In case the tested entity needed a wholesaler to order resources, we used a fake wholesaler (class `FakeWholesaler`) that can sell resources to the tested class and store what and how much has been sold.
+
+We created one end to end test by instancing a `Utils` object and calling its `run` method to start, waiting a few seconds and calling `externalEndService` method to end.
+
+To validate the concurrency protections on `Factory::trade()` and `Extractor::trade()` we have setup 2 tests:
+```cpp
+TEST(Factory, ConcurrentTradesAreManaged) {
+    PlasticFactory pf(1, FACTORIES_FUND);
+    const int ORIGINAL_STOCK = 20000;
+    pf.setStocks({{ItemType::Plastic, ORIGINAL_STOCK}});
+
+    runMassiveTrades(pf, ItemType::Plastic, ORIGINAL_STOCK, PLASTIC_COST);
+
+    EXPECT_EQ(pf.getStocks().at(ItemType::Plastic), 0);
+    EXPECT_EQ(pf.getFund(), FACTORIES_FUND + ORIGINAL_STOCK * PLASTIC_COST);
+}
+```
+Most of the logic is inside `runMassiveTrades()` where we launch 8 threads to run `FakeWholesaler::massiveTrade()` that is just doing trades in loop until a trade fails. At the end of this method, we calculated and made expections on the amount of money spent and total number of items bought in all threads. As the 2 last lines show, we checked on the factory that the final stock is effectively 0 and that the fund is coherent with all received money.
+
+```cpp
+EXPECT_EQ(originalQuantity * cost, totalMoneySpent);
+EXPECT_EQ(originalQuantity, totalItemNumbersBought);
+```
+
+We tried to remove temporarly the use of mutex in `trade` and we see that our test is correctly finding incoherences on the final state (more money has been spent than possible and more items have been bought that what is possible).
+![mutex-removed-fail.png](imgs/mutex-removed-fail.png)
+
+Finally, after some non light effort, the tests are working effectively and all are passing ! The test `Factory.CanBuildItemWhenItHasRessources` is a bit slow to run, probably because of the sleeps in `buildItem()`.
+![all-tests.png](imgs/all-tests.png)
+
+As it was a first experiment with GoogleTest we didn't have time to test all logic. Our test suite is focused on Factory, and concurrency on `Factory::trade` and `Extractor::trade`. We could have replicated some logic tests on `Extractor` and concurrency tests on `Wholesaler` and other methods (like `buildItem()` running at the same time of a `trade()`).
 
 ## Conclusion
 /* TODO */
@@ -89,7 +127,7 @@ To run end to end test, we create a `Utils` object and call its `run` method to 
 
 - Factory::orderResources
 on itere sur les ressources necessaires:
-    on regarde si on a besoin du produit et si on a assez d'argent, sinon ca sert à rien d'itérer sur les wholesellers alors qu'on a pas besoin/peut pas acheter le produit
+    on regarde si on a besoin du produit et si on a assez d'argent, sinon ca sert à rien d'itérer sur les wholesalers alors qu'on a pas besoin/peut pas acheter le produit
         on itère sur les sellers 
             on regarde qui peut nous fournir le produit
                 on l'achete
@@ -98,4 +136,3 @@ mutex dès qu'on vérifie les fonds car on veut pas que les fonds diminue avant 
 - TODO expliquer stratégie générale des mutex. Un mutex par chaque instance d'objet car chaque objet possède ses propres fonds & stock & est le seul à y avoir accès. Aussi car lorsqu'une transaction est faite, elle est implementé dans le vendeur. Ainsi, le vendeur a accès à ses ressources. Et le stock & fonds de l'acheter est mis à jour lorsqu'il appelle la fonction trade de l'objet à qui il veut acheter (notamment dans la fonction run).
 
 - TODO appeler requestStop de pcothread 
-            
