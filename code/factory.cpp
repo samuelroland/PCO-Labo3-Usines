@@ -21,7 +21,7 @@ Factory::Factory(int uniqueId, int fund, ItemType builtItem, std::vector<ItemTyp
 void Factory::setWholesalers(std::vector<Wholesale *> wholesalers) {
     Factory::wholesalers = wholesalers;
 
-#ifdef NTEST
+#ifndef GTEST_CONTEXT
     for (Seller *seller: wholesalers) {
         interface->setLink(uniqueId, seller->getUniqueId());
     }
