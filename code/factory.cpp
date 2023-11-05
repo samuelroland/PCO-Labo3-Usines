@@ -21,9 +21,11 @@ Factory::Factory(int uniqueId, int fund, ItemType builtItem, std::vector<ItemTyp
 void Factory::setWholesalers(std::vector<Wholesale *> wholesalers) {
     Factory::wholesalers = wholesalers;
 
+#ifdef NTEST
     for (Seller *seller: wholesalers) {
-        NTEST(interface->setLink(uniqueId, seller->getUniqueId()));
+        interface->setLink(uniqueId, seller->getUniqueId());
     }
+#endif
 }
 
 ItemType Factory::getItemBuilt() {
@@ -50,7 +52,7 @@ void Factory::buildItem() {
 
     /* Vérification  des fonds et du stock nécessaire pour produire l'objet */
     int itemCost = getEmployeeSalary(getEmployeeThatProduces(itemBuilt));
-    if(itemCost > money || !verifyResources()){
+    if (itemCost > money || !verifyResources()) {
         return;
     }
 
@@ -65,21 +67,21 @@ void Factory::buildItem() {
     nbBuild++;
     stocks[itemBuilt] += 1;
     /* Decrémenter le stock des matériaux utilisés */
-    for (ItemType item : resourcesNeeded){
+    for (ItemType item: resourcesNeeded) {
         stocks[item] -= 1;
     }
     mutex.unlock();
 
-    interface->updateFund(uniqueId, money);
-    interface->updateStock(uniqueId, &stocks);
+    NTEST(interface->updateFund(uniqueId, money));
+    NTEST(interface->updateStock(uniqueId, &stocks));
 
-    NTEST(interface->consoleAppendText(uniqueId, QString("1 ")  % getItemName(itemBuilt) %  " has been built"));
+    NTEST(interface->consoleAppendText(uniqueId, QString("1 ") % getItemName(itemBuilt) % " has been built"));
 }
 
 void Factory::orderResources() {
 
     // TODO - Itérer sur les resourcesNeeded et les wholesalers disponibles
-    for (ItemType it : resourcesNeeded){
+    for (ItemType it: resourcesNeeded) {
         int price = getCostPerUnit(it);
 
         /*
@@ -90,19 +92,17 @@ void Factory::orderResources() {
         /* TODO (OK) */
         /* Si stocks[item] = 0 et on a assez d'argent*/
         mutex.lock();
-        if(!stocks[it] && money >= price){
+        if (!stocks[it] && money >= price) {
 
             /* On regarde lequel des wholesaler peut nous fournir le produit */
-            for(Wholesale *w : wholesalers){
-                if(w->trade(it, 1)){
+            for (Wholesale *w: wholesalers) {
+                if (w->trade(it, 1)) {
                     money -= price;
-                    interface->updateFund(uniqueId, money);
+                    NTEST(interface->updateFund(uniqueId, money));
                     stocks[it] += 1;
-                    interface->updateStock(uniqueId, &stocks);
+                    NTEST(interface->updateStock(uniqueId, &stocks));
 
-                    NTEST(interface->consoleAppendText(uniqueId, QString("I have bought 1 of ") % getItemName(it)
-                                                       % QString(" at wholesaler %1").arg(w->getUniqueId())
-                                                       % QString(" which would costed me %1").arg(price)));
+                    NTEST(interface->consoleAppendText(uniqueId, QString("I have bought 1 of ") % getItemName(it) % QString(" at wholesaler %1").arg(w->getUniqueId()) % QString(" which would costed me %1").arg(price)));
 
                     break;
                 }
@@ -113,7 +113,6 @@ void Factory::orderResources() {
 
     //Temps de pause pour éviter trop de demande
     PcoThread::usleep(10 * 100000);
-
 }
 
 void Factory::run() {
@@ -143,17 +142,17 @@ int Factory::trade(ItemType it, int qty) {
     // TODO
 
     mutex.lock();
-    if(qty <= 0 || stocks[it] < qty){
+    if (qty <= 0 || stocks[it] < qty) {
         mutex.unlock();
         return 0;
     }
 
     stocks[it] -= qty;
-    interface->updateStock(uniqueId, &stocks);
+    NTEST(interface->updateStock(uniqueId, &stocks));
 
     int tradeProfit = getMaterialCost() * qty;
     money += tradeProfit;
-    interface->updateFund(uniqueId, money);
+    NTEST(interface->updateFund(uniqueId, money));
 
     mutex.unlock();
     return tradeProfit;

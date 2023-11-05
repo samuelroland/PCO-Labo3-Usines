@@ -23,11 +23,11 @@ int Extractor::trade(ItemType it, int qty) {
     if (qty > 0 && it == getResourceMined() && stocks[it] >= qty) {
         //mettre à jour les stocks & les fonds
         stocks[it] -= qty;
-        interface->updateStock(uniqueId, &stocks);
+        NTEST(interface->updateStock(uniqueId, &stocks));
 
         int tradeProfit = getMaterialCost() * qty;
         money += tradeProfit;
-        interface->updateFund(uniqueId, money);
+        NTEST(interface->updateFund(uniqueId, money));
 
         mutex.unlock();
         return tradeProfit;

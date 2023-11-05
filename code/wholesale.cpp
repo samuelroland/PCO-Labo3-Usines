@@ -37,12 +37,11 @@ void Wholesale::buyResources() {
                                                          getItemName(i) % QString(" which would cost me %1").arg(price)));
     /* TODO (OK) */
     mutex.lock();
-    if(price <= money && s->trade(i, qty)){
+    if (price <= money && s->trade(i, qty)) {
         stocks[i] += qty;
         money -= price;
     }
     mutex.unlock();
-
 }
 
 void Wholesale::run() {
@@ -53,7 +52,7 @@ void Wholesale::run() {
     }
 
     NTEST(interface->consoleAppendText(uniqueId, "[START] Wholesaler routine"));
-	while (!PcoThread::thisThread()->stopRequested()) {
+    while (!PcoThread::thisThread()->stopRequested()) {
         buyResources();
         NTEST(interface->updateFund(uniqueId, money));
         NTEST(interface->updateStock(uniqueId, &stocks));
@@ -71,14 +70,14 @@ int Wholesale::trade(ItemType it, int qty) {
 
     // TODO
     mutex.lock();
-    if(qty > 0 && stocks[it] >= qty){
+    if (qty > 0 && stocks[it] >= qty) {
         //mettre à jour les stocks & les fonds
         stocks[it] -= qty;
-        interface->updateStock(uniqueId, &stocks);
+        NTEST(interface->updateStock(uniqueId, &stocks));
 
         int tradeProfit = getCostPerUnit(it) * qty;
         money += tradeProfit;
-        interface->updateFund(uniqueId, money);
+        NTEST(interface->updateFund(uniqueId, money));
 
         mutex.unlock();
         return tradeProfit;
