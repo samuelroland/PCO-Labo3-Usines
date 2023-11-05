@@ -81,7 +81,10 @@ protected:
     PcoMutex mutex;
 
 private:
-    FRIEND_TEST(FactoryTrade, CanTradeItemsInStock);
+    FRIEND_TEST(Factory, CanTradeItemsInStock);
+    FRIEND_TEST(Factory, CanBuildItemWhenItHasRessources);
+    FRIEND_TEST(Factory, InvalidTradeIsImpossible);
+    FRIEND_TEST(Factory, ConcurrentTradesAreManaged);
     void setStocks(std::map<ItemType, int> stocks) { this->stocks = stocks; }
 };
 
