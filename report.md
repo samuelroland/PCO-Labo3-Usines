@@ -3,9 +3,9 @@
 Authors: Vitória Oliveira et Samuel Roland
 
 ## Introduction
-This project consists in a sales simulation application with extractors, wholesalers and factories. They are constantly selling and/or buying resources from/to other entities. The program has a UI that shows in real time the ressources and funds of each entity.
+This project consists in a sales simulation application with extractors, wholesalers and factories. They are constantly selling and/or buying resources from/to other entities. The program has a UI that shows in real time the resources and funds of each entity.
 
-The primary goal of this project is to effectively address problems associated to concurrent access such as the protection of resources that can be manipulated by multiple functions. 
+The primary goal of this project is to effectively address problems associated with concurrent accesses such as the protection of resources that can be manipulated by multiple functions. 
 
 This report documents our strategies in implementing solutions to tackle these issues. 
 
@@ -16,7 +16,7 @@ This report documents our strategies in implementing solutions to tackle these i
 ### Mutex
 - (TODO à effacer) QUESTION: MULTIPLE THREADS? 
 
-The main problem of this project is to safeguard resources of a instance that might be accessed by multiple threads/functions simutaneaously. More precisely, we've focused on protecting the stocks and funds of each Seller object as these variables are modify everytime Sellers build, buy and sell items to each other. 
+The main problem of this project is to safeguard resources of a instance that might be accessed by multiple threads/functions simultaneously. More precisely, we've focused on protecting the stocks and funds of each Seller object as these variables are modify everytime Sellers build, buy and sell items to each other. 
 
 - (TODO à effacer)  POURQUOI MUTEX EST PROTECTED ET DECLARE DANS SELLER
 
@@ -24,7 +24,7 @@ In order to do so, we've implemented a protected access mutex in Seller's class.
 
 - (TODO à effacer) INTERET DE CHAQUE OBJET D'AVOIR UN SEUL MUTEX PAR RESOURCE A PROTEGER 
 
-As multiple functions in each object might try to access these ressources at the same time, we've chosen to implement a single mutex for each resource to be secured as a way to ensure data integrity. This mutex was acquired  whenever we read or write to the money or stocks and is released once the operation is completed.
+As multiple functions in each object might try to access these resources at the same time, we've chosen to implement a single mutex for each resource to be secured as a way to ensure data integrity. This mutex was acquired  whenever we read or write to the money or stocks and is released once the operation is completed.
 
 - (TODO à effacer) POURQUOI UN MUTEX POUR MONEY/STOCK ET PAS UN POUR CHAQUE RESOURCE
 
@@ -60,10 +60,10 @@ Similar to Extractor::trade, except for the conditions to proceed with the trade
 - /* TODO */
 
 ### Termination 
-In order to ensure a proper termination of the simulation, we've declared a boolean variable called *stopRequest* in the file *Utils.cpp* that serves as signal to indicate if a request to end the simulation has been made. 
+In order to ensure a proper termination of the simulation, we've declared a boolean variable called `stopRequest` in the file *Utils.cpp* that serves as signal to indicate if a request to end the simulation has been made. 
 This variable is initially set to false and is set to true if a call to *Utils::endService()* is made (when the window is closed).
 
-To take this in account elsewhere in the project, we've added a while loop that checks if *stopRequest* is true in all run functions for each Seller subclass.    
+To take this in account elsewhere in the project, we've added a while loop that checks if `stopRequest` is true in all run functions for each Seller subclass.    
 
 ## Tests
 
@@ -74,13 +74,13 @@ Closing the window show the final report with the expected final amount of money
 ![message-final.png](imgs/message-final.png)
 
 **Automated tests**  
-Do to more advanced testing on logic and concurrency protections, we tried to write some GoogleTest tests, mostly in the form of integration tests. To avoid needing to setup a Qt UI interface, we disabled the usage of the `interface` attribute so we don't call `setInterface`. (Therefore the attribute `interface` is `NULLPTR` in tests). We created a macro `NTEST` used like this: `NTEST(interface...)` that doesn't run the given instruction in case the `GTEST` macro has been defined. This is kind of a "headless" mode. The interface is just a visualizer, we don't need them to test the logic and behaviors.
+Do to more advanced testing on logic and concurrency protections, we tried to write some GoogleTest tests, mostly in the form of integration tests. To avoid needing to setup a Qt UI interface, we disabled the usage of the `interface` attribute, so we don't call `setInterface`. (Therefore the attribute `interface` is `NULLPTR` in tests). We created a macro `NTEST` used like this: `NTEST(interface...)` that doesn't run the given instruction in case the `GTEST` macro has been defined. This is kind of a "headless" mode. The interface is just a visualizer, we don't need them to test the logic and behaviors.
 
-We added a method `std::map<ItemType, int> getStocks()` on the `Seller` class so we can make assertions on the final stocks in addition to the money with `getFund()`. We created a setter too `void setStocks(std::map<ItemType, int> stocks)` but we put its visibility in `protected` and the each test that need its access is a friend of the method.
+We added a method `std::map<ItemType, int> getStocks()` on the `Seller` class so we can make assertions on the final stocks in addition to the money with `getFund()`. We created a setter too `void setStocks(std::map<ItemType, int> stocks)` but we put its visibility in `protected` and each test that need its access is a friend of the method.
 
 Each test has different needs. In some case we don't need to run object in threads, we for example just want to test that `trade()` only accept the trade when the entity has a stock and can sell the asked resource. In case the tested entity needed a wholesaler to order resources, we used a fake wholesaler (class `FakeWholesaler`) that can sell resources to the tested class and store what and how much has been sold.
 
-We created one end to end test by instancing a `Utils` object and calling its `run` method to start, waiting a few seconds and calling `externalEndService` method to end.
+We created one end-to-end test by instancing a `Utils` object and calling its `run` method to start, waiting a few seconds and calling `externalEndService` method to end.
 
 To validate the concurrency protections on `Factory::trade()` and `Extractor::trade()` we have setup 2 tests:
 ```cpp
@@ -95,17 +95,17 @@ TEST(Factory, ConcurrentTradesAreManaged) {
     EXPECT_EQ(pf.getFund(), FACTORIES_FUND + ORIGINAL_STOCK * PLASTIC_COST);
 }
 ```
-Most of the logic is inside `runMassiveTrades()` where we launch 8 threads to run `FakeWholesaler::massiveTrade()` that is just doing trades in loop until a trade fails. At the end of this method, we calculated and made expections on the amount of money spent and total number of items bought in all threads. As the 2 last lines show, we checked on the factory that the final stock is effectively 0 and that the fund is coherent with all received money.
+Most of the logic is inside `runMassiveTrades()` where we launch 8 threads to run `FakeWholesaler::massiveTrade()` that is just doing trades in loop until a trade fails. At the end of this method, we calculated and made expectations on the amount of money spent and total number of items bought in all threads. As the 2 last lines show, we checked on the factory that the final stock is effectively 0 and that the fund is coherent with all received money.
 
 ```cpp
 EXPECT_EQ(originalQuantity * cost, totalMoneySpent);
 EXPECT_EQ(originalQuantity, totalItemNumbersBought);
 ```
 
-We tried to remove temporarly the use of mutex in `trade` and we see that our test is correctly finding incoherences on the final state (more money has been spent than possible and more items have been bought that what is possible).
+We tried to remove temporarily the use of mutex in `trade` and we see on the picture that our test is correctly detecting the wrong final state (more money has been spent than possible and more items have been bought that what is possible).
 ![mutex-removed-fail.png](imgs/mutex-removed-fail.png)
 
-Finally, after some non light effort, the tests are working effectively and all are passing ! The test `Factory.CanBuildItemWhenItHasRessources` is a bit slow to run, probably because of the sleeps in `buildItem()`.
+Finally, after some relatively important effort, the tests are working effectively and all are passing ! The test `Factory.CanBuildItemWhenItHasRessources` is a bit slow to run, probably because of the sleeps in `buildItem()`.
 ![all-tests.png](imgs/all-tests.png)
 
 As it was a first experiment with GoogleTest we didn't have time to test all logic. Our test suite is focused on Factory, and concurrency on `Factory::trade` and `Extractor::trade`. We could have replicated some logic tests on `Extractor` and concurrency tests on `Wholesaler` and other methods (like `buildItem()` running at the same time of a `trade()`).
@@ -126,13 +126,13 @@ As it was a first experiment with GoogleTest we didn't have time to test all log
 - TODO voir où on check la quantité d'un stock car on peut l'obtenir à partir de getItemsForSale.first == item voulu et on check .second qui nous dira la quantité disponible.
 
 - Factory::orderResources
-on itere sur les ressources necessaires:
+on itere sur les resources necessaires:
     on regarde si on a besoin du produit et si on a assez d'argent, sinon ca sert à rien d'itérer sur les wholesalers alors qu'on a pas besoin/peut pas acheter le produit
         on itère sur les sellers 
             on regarde qui peut nous fournir le produit
                 on l'achete
 mutex dès qu'on vérifie les fonds car on veut pas que les fonds diminue avant d'acheter le produit (par exemple dans buildItem) (pas besoin de mettre mutex pour le stock car ici on vérifie si stock[0] et si stock[0] il ne peut pas diminuer ailleurs et s'il augmente c'est pas grave MAIS pas forcément besoin de l'acheter MAIS par question d'évolutivité ce ne serait pas grave de le sécuriser)
 
-- TODO expliquer stratégie générale des mutex. Un mutex par chaque instance d'objet car chaque objet possède ses propres fonds & stock & est le seul à y avoir accès. Aussi car lorsqu'une transaction est faite, elle est implementé dans le vendeur. Ainsi, le vendeur a accès à ses ressources. Et le stock & fonds de l'acheter est mis à jour lorsqu'il appelle la fonction trade de l'objet à qui il veut acheter (notamment dans la fonction run).
+- TODO expliquer stratégie générale des mutex. Un mutex par chaque instance d'objet car chaque objet possède ses propres fonds & stock & est le seul à y avoir accès. Aussi car lorsqu'une transaction est faite, elle est implementé dans le vendeur. Ainsi, le vendeur a accès à ses resources. Et le stock & fonds de l'acheter est mis à jour lorsqu'il appelle la fonction trade de l'objet à qui il veut acheter (notamment dans la fonction run).
 
 - TODO appeler requestStop de pcothread 
