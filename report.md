@@ -5,15 +5,16 @@ Authors: Vitória Oliveira et Samuel Roland
 ## Introduction
 This project consists in a sales simulation application with extractors, wholesalers and factories. They are constantly selling and/or buying resources from/to other entities. The program has a UI that shows in real time the resources and funds of each entity.
 
-The primary goal of this project is to effectively address problems associated with concurrent accesses such as the protection of resources that can be manipulated by multiple functions. 
-
-This report documents our strategies in implementing solutions to tackle these issues. 
+The primary goal of this project is to effectively address problems associated with concurrent accesses such as the protection of resources that can be manipulated by multiple threads at the same time. This report documents our strategies in implementing solutions to tackle these issues. 
 
 ## Description of software features
 
 ## Implementation Choices
+The first important point to understand is that stocks and funds can only be modified by its owner as they are private attributes. The concurrent access on these variables is caused by the multiple entities in different threads that request a trade in parallel. The transaction (reading and changing the fund and the stocks) must be done atomically, therefore we used a mutex per entity.
 
 ### Mutex
+TODO: je pense que cette section peut être résumé en 2-3 phrases, je n'y vois pas un grand intérêt de rexpliquer pourquoi on aurait besoin de mutex.
+
 - (TODO à effacer) QUESTION: MULTIPLE THREADS? 
 
 The main problem of this project is to safeguard resources of a instance that might be accessed by multiple threads/functions simultaneously. More precisely, we've focused on protecting the stocks and funds of each Seller object as these variables are modify everytime Sellers build, buy and sell items to each other. 
@@ -30,37 +31,39 @@ As multiple functions in each object might try to access these resources at the 
 
 However, for our specific project requirements, we observed that money and stocks were consistently read and written to within the same block of instructions. To simplify our implementation and enhance performance, we opted for a single mutex to protect both variables.
 
-There is one important point to understand here: stocks and funds can only be modified by its owner as they are private attributes. The concurrent access on these variables is caused because multiple entities in different threads can request a trade with at the same time.
 
 ### Extractors
-**Competition Management in *extractor::run***
-It's necessary to acquire the instance's mutex in two steps to ensure that the current thread is the only one modifying the amount of money during the miner's payment and, later on, the modification of the stock. These instructions need protection because other threads might attempt to modify these variables simultaneously (for example, a call to trade() by another thread that could try to access money and stocks).
+**Competition Management in `Extractor::run`**
+It's necessary to acquire the instance's mutex in two steps to ensure that the current thread is the only one modifying the amount of money during the miner's payment and, later on, the modification of the stock. The sleep must not be included because it would block other threads to start a trade. Changing the `money` separately than the `stocks` is not risky in this particular case.
 
-***Extractor::trade***  
+**`Extractor::trade`**  
 First, it's essential to check the arguments to proceed with the transaction. A check to certify that the requested quantity is greater than 0 is made; otherwise, it would not be logical neither necessary to carry out the transaction. It is also essential to verify that the requested item matches the item sold by the extractor and that the extractor has the requested quantity.
 
 Once this is done, we can proceed with the transaction. Therefore, we need to update the seller's stock and funds.
 Since multiple threads can attempt to perform transactions simultaneously, we need to manage concurrency. Since a stock check is performed before starting the transaction, it is vital to lock a mutex before this check is made to ensure that the updated stock corresponds to the stock previously returned and that no other threads have been able to change it between these two instructions.
 
 ### Wholesales
-***Wholesale::buyResources***  
+**`Wholesale::buyResources`**  
 To start with, it is fundamental to acquire a mutex prior to verifying the availability of the wholesale's financial resources and confirming the feasibility of the trade through a call to the seller's trade function. This is necessary to prevent a potential interference by another thread that may alter the wholesale's finances or the seller's inventory. Once this is done, we can proceed and update the wholesale's funds and inventory,  after which the mutex can be released. 
 
-***Wholesale::trade()***  
-Similar to Extractor::trade, except for the conditions to proceed with the trade. It is necessary to check if the requested quantity is strictly positive or if this quantity for the wanted item is available in stock.
+**`Wholesale::trade()`**  
+Similar to Extractor::trade, except for the conditions to proceed with the trade. It is necessary to check:
+- if the requested quantity is strictly positive
+- if this quantity for the wanted item is available in stock
 
+TODO: ya probablement pas grand chose à dire, juste 1-2 phrases peut-être si ya des différences par rapport aux autres.
 ### Factories
-***Factory::buildItem***
+**`Factory::buildItem`**
 - /* TODO */
 
-****Factory::orderResources***
+**`Factory::orderResources`**
 - /* TODO */
 
-****Factory::trade***
-- /* TODO */
+***`Factory::trade`**
+We need to do additional check to not sell resources used to produce the built item. For example a factory cannot sell Petrol.
 
 ### Termination 
-In order to ensure a proper termination of the simulation, we've declared a boolean variable called `stopRequest` in the file *Utils.cpp* that serves as signal to indicate if a request to end the simulation has been made. 
+In order to ensure a proper termination of the simulation, we've declared a boolean variable called `stopRequest` in the file `Utils.cpp` that serves as signal to indicate if a request to end the simulation has been made. 
 This variable is initially set to false and is set to true if a call to *Utils::endService()* is made (when the window is closed).
 
 To take this in account elsewhere in the project, we've added a while loop that checks if `stopRequest` is true in all run functions for each Seller subclass.    
@@ -75,6 +78,11 @@ Closing the window show the final report with the expected final amount of money
 
 **Automated tests**  
 Do to more advanced testing on logic and concurrency protections, we tried to write some GoogleTest tests, mostly in the form of integration tests. To avoid needing to setup a Qt UI interface, we disabled the usage of the `interface` attribute, so we don't call `setInterface`. (Therefore the attribute `interface` is `NULLPTR` in tests). We created a macro `NTEST` used like this: `NTEST(interface...)` that doesn't run the given instruction in case the `GTEST` macro has been defined. This is kind of a "headless" mode. The interface is just a visualizer, we don't need them to test the logic and behaviors.
+
+As we could figure out how to integrate GoogleTest and PcoSynchro and Qt with the existing `.pro` file and to benefit from VSCode CMake integration, we adapted a `CMakeLists.txt` made by Aubry and created a file `tests/tests.cpp`. To build it and run it from command line you can run:
+```bash
+cmake . -Bbuild && cmake --build build/ && ./build/tests
+```
 
 We added a method `std::map<ItemType, int> getStocks()` on the `Seller` class so we can make assertions on the final stocks in addition to the money with `getFund()`. We created a setter too `void setStocks(std::map<ItemType, int> stocks)` but we put its visibility in `protected` and each test that need its access is a friend of the method.
 
