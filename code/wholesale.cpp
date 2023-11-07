@@ -79,8 +79,8 @@ int Wholesale::trade(ItemType it, int qty) {
         mutex.unlock();
         return tradeProfit;
     }
-    mutex.unlock();
 
+    mutex.unlock();
     return 0;
 }
 
