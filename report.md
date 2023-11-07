@@ -141,7 +141,11 @@ Finally, after some relatively important effort, the tests are working effective
 As it was a first experiment with GoogleTest we didn't have time to test all logic. Our test suite is focused on Factory, and concurrency on `Factory::trade` and `Extractor::trade`. We could have replicated some logic tests on `Extractor` and concurrency tests on `Wholesaler` and other methods (like `buildItem()` running at the same time of a `trade()`).
 
 ## Conclusion
-/* TODO */
+
+Our primary objective was to efficiently handle concurrency in our dynamic sales simulation application. To achieve this, we created a reliable system to protect crucial resources in a multi-threaded environment by strategically placing multiple mutexes around critical code sections.
+
+This system ensures that each entity has exclusive access to its essential resources, preventing conflicts and ensuring data consistency. Our approach also emphasizes efficiency by minimizing delays in program execution, especially when handling trade functions.
+
 
 - TODO dans factory::orderResources(). 1 de quantité as variable quantity for code evolution (or add CONST STATIC for recette d'ingredients) + vérifier stock[it] < qtyNeeded
 
