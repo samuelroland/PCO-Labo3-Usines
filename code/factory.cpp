@@ -77,24 +77,24 @@ void Factory::buildItem() {
 
 void Factory::orderResources() {
 
-    int qty = 1;
+    const int QTY = 1;
     for (ItemType it: resourcesNeeded) {
-        int price = getCostPerUnit(it) * qty;
+        int price = getCostPerUnit(it) * QTY;
 
         
         NTEST(interface->consoleAppendText(uniqueId, QString("I would like to buy 1 of ") % getItemName(it)
                                            % QString(" which would cost me %1").arg(price)));
         
 
-        /* Prendre le premier élément du stock qui est à zéro (pour l'acheter en priorité) */
+        /* Prendre le premier élément du stock dont on en a pas assez (pour l'acheter en priorité) */
         mutex.lock();
-        if (!stocks[it] && money >= price) {
+        if (stocks[it] < QTY && money >= price) {
             /* On regarde lequel des wholesaler peut nous fournir le produit */
             auto wholesalersCopy = wholesalers;
             /* On choisit un wholesaler aléatoire pour éviter qu'on achète toujours aux premiers wholesalers */
             shuffle(wholesalersCopy.begin(), wholesalersCopy.end(), std::default_random_engine{});
             for (Wholesale *w: wholesalersCopy) {
-                if (w->trade(it, qty)) {
+                if (w->trade(it, QTY)) {
                     money -= price;
                     NTEST(interface->updateFund(uniqueId, money));
                     stocks[it] += 1;
