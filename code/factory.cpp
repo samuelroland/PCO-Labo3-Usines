@@ -90,6 +90,7 @@ void Factory::orderResources() {
         if (!stocks[it] && money >= price) {
             /* On regarde lequel des wholesaler peut nous fournir le produit */
             auto wholesalersCopy = wholesalers;
+            /* On choisit un wholesaler aléatoire pour éviter qu'on achète toujours aux premiers wholesalers */
             shuffle(wholesalersCopy.begin(), wholesalersCopy.end(), std::default_random_engine{});
             for (Wholesale *w: wholesalersCopy) {
                 if (w->trade(it, 1)) {
