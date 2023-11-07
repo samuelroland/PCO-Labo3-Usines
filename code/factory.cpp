@@ -80,12 +80,12 @@ void Factory::orderResources() {
     for (ItemType it: resourcesNeeded) {
         int price = getCostPerUnit(it);
 
-        /*
+        
         NTEST(interface->consoleAppendText(uniqueId, QString("I would like to buy 1 of ") % getItemName(it)
                                            % QString(" which would cost me %1").arg(price)));
-        */
+        
 
-        //Prendre le premier élément du stock qui est à zéro (pour l'acheter en priorité)
+        /* Prendre le premier élément du stock qui est à zéro (pour l'acheter en priorité) */
         mutex.lock();
         if (!stocks[it] && money >= price) {
             /* On regarde lequel des wholesaler peut nous fournir le produit */
