@@ -1,4 +1,4 @@
-# Labo 3 report - Managing concurrent access - PCO
+# Labo 3 - Managing concurrent access - PCO
 
 Authors: Vitória Oliveira et Samuel Roland
 
@@ -19,6 +19,8 @@ We have implemented a protected access mutex within the Seller's class, which pr
 As multiple threads might try to access the critical resources at the same time, we could have implemented one mutex for each resource to be secured as a way to ensure data integrity. However, in consideration of our project's specific requirements, we noticed that both money and stocks were consistently read and written within the same block of instructions. 
 
 To simplify our implementation and enhance performance, we have opted for a single mutex to protect both variables. This mutex is acquired when we read or write to the money or stocks and is released once the operations are completed.
+
+<div class="page">
 
 ### Extractors
 **Competition Management in `Extractor::run`**
@@ -47,6 +49,8 @@ Similar to Extractor::trade, except for the conditions to proceed with the trade
 - if this quantity for the wanted item is available in stock
 
 Another difference is that we use `getCostPerUnit` function here instead of `getMaterialCost` (as it is not available in the Wholesale class but also more appropriate in this case). 
+
+<div class="page">
 
 ### Factories
 **`Factory::buildItem`**
@@ -90,6 +94,9 @@ We conducted manual tests to evaluate the program's under normal conditions:
 
 After around 50 seconds of execution, here is the visual state. The 2 wholesalers have almost no funds left.
 ![state-final.png](imgs/state-final.png)
+
+<div class="page">
+
 Closing the window show the final report with the expected final amount of money.
 ![message-final.png](imgs/message-final.png)
 
@@ -136,6 +143,8 @@ Finally, after some relatively important effort, the tests are working effective
 ![all-tests.png](imgs/all-tests.png)
 
 As it was a first experiment with GoogleTest we didn't have time to test all logic. Our test suite is focused on Factory, and concurrency on `Factory::trade` and `Extractor::trade`. We could have replicated some logic tests on `Extractor` and concurrency tests on `Wholesaler` and other methods (like `buildItem()` running at the same time of a `trade()`).
+
+<div class="page">
 
 ## Conclusion
 
