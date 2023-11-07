@@ -12,55 +12,73 @@ The primary goal of this project is to effectively address problems associated w
 ## Implementation Choices
 The first important point to understand is that stocks and funds can only be modified by its owner as they are private attributes. The concurrent access on these variables is caused by the multiple entities in different threads that request a trade in parallel. The transaction (reading and changing the fund and the stocks) must be done atomically, therefore we used a mutex per entity.
 
+In general, we excluded calls to `PcoThread::usleep` from critical sections to prevent blocking other threads while one is "paused". We've tried to minimize calls to other functions (except for getters) whenever possible to avoid delaying program execution. However, calls to the trade function were an exception in Factory::orderResources and Wholesale::buyResources, as it was necessary to verify if the trade was possible.
+
 ### Mutex
-TODO: je pense que cette section peut être résumé en 2-3 phrases, je n'y vois pas un grand intérêt de rexpliquer pourquoi on aurait besoin de mutex.
 
-- (TODO à effacer) QUESTION: MULTIPLE THREADS? 
+We have implemented a protected access mutex within the Seller's class, which provides each subclass with its exclusive mutex.
 
-The main problem of this project is to safeguard resources of a instance that might be accessed by multiple threads/functions simultaneously. More precisely, we've focused on protecting the stocks and funds of each Seller object as these variables are modify everytime Sellers build, buy and sell items to each other. 
+As multiple threads might try to access the critical resources at the same time, we could have implemented one mutex for each resource to be secured as a way to ensure data integrity. However, in consideration of our project's specific requirements, we noticed that both money and stocks were consistently read and written within the same block of instructions. 
 
-- (TODO à effacer)  POURQUOI MUTEX EST PROTECTED ET DECLARE DANS SELLER
-
-In order to do so, we've implemented a protected access mutex in Seller's class. This allows each subclass to have it's own exclusive mutex, ensuring that no other object can access it. This prevents data race conditions, where multiple functions within an object might attempt to access these resources concurrently.
-
-- (TODO à effacer) INTERET DE CHAQUE OBJET D'AVOIR UN SEUL MUTEX PAR RESOURCE A PROTEGER 
-
-As multiple functions in each object might try to access these resources at the same time, we've chosen to implement a single mutex for each resource to be secured as a way to ensure data integrity. This mutex was acquired  whenever we read or write to the money or stocks and is released once the operation is completed.
-
-- (TODO à effacer) POURQUOI UN MUTEX POUR MONEY/STOCK ET PAS UN POUR CHAQUE RESOURCE
-
-However, for our specific project requirements, we observed that money and stocks were consistently read and written to within the same block of instructions. To simplify our implementation and enhance performance, we opted for a single mutex to protect both variables.
-
+To simplify our implementation and enhance performance, we have opted for a single mutex to protect both variables. This mutex is acquired when we read or write to the money or stocks and is released once the operations are completed.
 
 ### Extractors
 **Competition Management in `Extractor::run`**
 It's necessary to acquire the instance's mutex in two steps to ensure that the current thread is the only one modifying the amount of money during the miner's payment and, later on, the modification of the stock. The sleep must not be included because it would block other threads to start a trade. Changing the `money` separately than the `stocks` is not risky in this particular case.
 
 **`Extractor::trade`**  
-First, it's essential to check the arguments to proceed with the transaction. A check to certify that the requested quantity is greater than 0 is made; otherwise, it would not be logical neither necessary to carry out the transaction. It is also essential to verify that the requested item matches the item sold by the extractor and that the extractor has the requested quantity.
+First, it's essential to:  
+- certify that the requested quantity is greater than 0 is made;
+- verify that the requested item matches the item mined by the extractor 
+- verify that the extractor has the requested quantity.
 
 Once this is done, we can proceed with the transaction. Therefore, we need to update the seller's stock and funds.
 Since multiple threads can attempt to perform transactions simultaneously, we need to manage concurrency. Since a stock check is performed before starting the transaction, it is vital to lock a mutex before this check is made to ensure that the updated stock corresponds to the stock previously returned and that no other threads have been able to change it between these two instructions.
 
 ### Wholesales
 **`Wholesale::buyResources`**  
-To start with, it is fundamental to acquire a mutex prior to verifying the availability of the wholesale's financial resources and confirming the feasibility of the trade through a call to the seller's trade function. This is necessary to prevent a potential interference by another thread that may alter the wholesale's finances or the seller's inventory. Once this is done, we can proceed and update the wholesale's funds and inventory,  after which the mutex can be released. 
+To start with, it is fundamental to acquire a mutex prior to: 
+- verifying the availability of the wholesale's financial resources 
+- confirming the feasibility of the trade through a call to the seller's trade function. 
+
+This is necessary to prevent a potential interference by another thread that may alter the wholesale's finances or the seller's inventory. Once this is done, we can proceed and update the wholesale's funds and inventory,  after which the mutex can be released. 
 
 **`Wholesale::trade()`**  
 Similar to Extractor::trade, except for the conditions to proceed with the trade. It is necessary to check:
 - if the requested quantity is strictly positive
 - if this quantity for the wanted item is available in stock
 
-TODO: ya probablement pas grand chose à dire, juste 1-2 phrases peut-être si ya des différences par rapport aux autres.
+Another difference is that we use `getCostPerUnit` function here instead of `getMaterialCost` (as it is not available in the Wholesale class but also more appropriate in this case). 
+
 ### Factories
 **`Factory::buildItem`**
-- /* TODO */
+This function is called in `Factory::run` , right after checking if all resources needed are available in stock (through the `Factory::verifyResources`). 
+
+Here, it is important to: 
+- call `Factory::verifyResources` (even though this check is made before, it is necessary to verify once again inside this function as a call to trade might have modified the factory stocks in the meantime)
+- check if we have enough money to pay a employee to build the item. 
+
+If both checks pass, then the money paid to the worker is deducted, the stocks corresponding to the material used to produce the item are decreased, and the stocks are incremented by the quantity of items built (in our case always 1). 
 
 **`Factory::orderResources`**
-- /* TODO */
+We iterate through the needed resources then we check if:
+- the stocks for the neededResources == 0
+- we have enough money to order the resources
+
+We've chosen to create a shuffled copy of Wholesalers vector to prevent from always buying from the first sellers in the vector. 
+If the conditions allow for an order, we can proceed to iterate through the shuffled Wholesalers vector to see who can sell us the item and call `Wholesaler::trade` on them. 
+Once we've found the seller, we continue to decrement the price of the transaction from our fonds and increment our stocks. 
+
+As for the concurrency management, we lock a mutex before verifying the stocks and money and unlock it when out of the if block. We do so because a call to `Factory::trade` may modify the stocks and money as we are in this block. 
 
 ***`Factory::trade`**
-We need to do additional check to not sell resources used to produce the built item. For example a factory cannot sell Petrol.
+Here it is important to check if:
+- the requested item is built by the current factory
+- the requested quantity is strictly positive
+- this quantity for the wanted item is available in stock
+
+We need to do additional check to not sell resources used to produce the built item. For example a factory cannot sell Petrol. 
+/* TODO on le fait pas encore, alors à implementer */
 
 ### Termination 
 In order to ensure a proper termination of the simulation, we've declared a boolean variable called `stopRequest` in the file `Utils.cpp` that serves as signal to indicate if a request to end the simulation has been made. 
@@ -71,10 +89,14 @@ To take this in account elsewhere in the project, we've added a while loop that 
 ## Tests
 
 **Manual tests**  
+We conducted manual tests to evaluate the program's performance under normal conditions:
+
 After around 50 seconds of execution, here is the visual state. The 2 wholesalers have almost no funds left.
 ![state-final.png](imgs/state-final.png)
 Closing the window show the final report with the expected final amount of money.
 ![message-final.png](imgs/message-final.png)
+
+Additionally, we made multiple manual tests with varying numbers of instances for each entity and different initial funds. We executed the program and verified that the results met our expectations.
 
 **Automated tests**  
 Do to more advanced testing on logic and concurrency protections, we tried to write some GoogleTest tests, mostly in the form of integration tests. To avoid needing to setup a Qt UI interface, we disabled the usage of the `interface` attribute, so we don't call `setInterface`. (Therefore the attribute `interface` is `NULLPTR` in tests). We created a macro `NTEST` used like this: `NTEST(interface...)` that doesn't run the given instruction in case the `GTEST` macro has been defined. This is kind of a "headless" mode. The interface is just a visualizer, we don't need them to test the logic and behaviors.
@@ -121,26 +143,6 @@ As it was a first experiment with GoogleTest we didn't have time to test all log
 ## Conclusion
 /* TODO */
 
-- TODO expliquer pourquoi on a deux mutex dans extractor::run (à cause du sleep) et TODO pourquoi on en un slmt 1 dans factory
-
-- TODO pourquoi verifyRessources dans buildItem alors que deja dans run (risque de preemption entre les deux?)
-
-- TODO expliquer pourquoi on ne fait rien concernant le commentaire "acheter en priorite celui que l'usine n'a pas en stock" car de toute facon on ne va acheter que si stock[item] == 0. donc il n'y a rien à vérifier. 
-
-- TODO add message d'affichage
-
 - TODO dans factory::orderResources(). 1 de quantité as variable quantity for code evolution (or add CONST STATIC for recette d'ingredients) + vérifier stock[it] < qtyNeeded
 
 - TODO voir où on check la quantité d'un stock car on peut l'obtenir à partir de getItemsForSale.first == item voulu et on check .second qui nous dira la quantité disponible.
-
-- Factory::orderResources
-on itere sur les resources necessaires:
-    on regarde si on a besoin du produit et si on a assez d'argent, sinon ca sert à rien d'itérer sur les wholesalers alors qu'on a pas besoin/peut pas acheter le produit
-        on itère sur les sellers 
-            on regarde qui peut nous fournir le produit
-                on l'achete
-mutex dès qu'on vérifie les fonds car on veut pas que les fonds diminue avant d'acheter le produit (par exemple dans buildItem) (pas besoin de mettre mutex pour le stock car ici on vérifie si stock[0] et si stock[0] il ne peut pas diminuer ailleurs et s'il augmente c'est pas grave MAIS pas forcément besoin de l'acheter MAIS par question d'évolutivité ce ne serait pas grave de le sécuriser)
-
-- TODO expliquer stratégie générale des mutex. Un mutex par chaque instance d'objet car chaque objet possède ses propres fonds & stock & est le seul à y avoir accès. Aussi car lorsqu'une transaction est faite, elle est implementé dans le vendeur. Ainsi, le vendeur a accès à ses resources. Et le stock & fonds de l'acheter est mis à jour lorsqu'il appelle la fonction trade de l'objet à qui il veut acheter (notamment dans la fonction run).
-
-- TODO appeler requestStop de pcothread 
