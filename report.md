@@ -7,8 +7,6 @@ This project consists in a sales simulation application with extractors, wholesa
 
 The primary goal of this project is to effectively address problems associated with concurrent accesses such as the protection of resources that can be manipulated by multiple threads at the same time. This report documents our strategies in implementing solutions to tackle these issues. 
 
-## Description of software features
-
 ## Implementation Choices
 The first important point to understand is that stocks and funds can only be modified by its owner as they are private attributes. The concurrent access on these variables is caused by the multiple entities in different threads that request a trade in parallel. The transaction (reading and changing the fund and the stocks) must be done atomically, therefore we used a mutex per entity.
 
@@ -65,6 +63,8 @@ We iterate through the needed resources then we check if:
 - the stocks for the neededResources == 0
 - we have enough money to order the resources
 
+We declared a const variable `qty` initialised to 1 as it corresponds to the requested quantity for the trade. 
+
 We've chosen to create a shuffled copy of Wholesalers vector to prevent from always buying from the first sellers in the vector. 
 If the conditions allow for an order, we can proceed to iterate through the shuffled Wholesalers vector to see who can sell us the item and call `Wholesaler::trade` on them. 
 Once we've found the seller, we continue to decrement the price of the transaction from our fonds and increment our stocks. 
@@ -77,9 +77,6 @@ Here it is important to check if:
 - the requested quantity is strictly positive
 - this quantity for the wanted item is available in stock
 
-We need to do additional check to not sell resources used to produce the built item. For example a factory cannot sell Petrol. 
-/* TODO on le fait pas encore, alors à implementer */
-
 ### Termination 
 In order to ensure a proper termination of the simulation, we've declared a boolean variable called `stopRequest` in the file `Utils.cpp` that serves as signal to indicate if a request to end the simulation has been made. 
 This variable is initially set to false and is set to true if a call to *Utils::endService()* is made (when the window is closed).
@@ -89,14 +86,14 @@ To take this in account elsewhere in the project, we've added a while loop that 
 ## Tests
 
 **Manual tests**  
-We conducted manual tests to evaluate the program's performance under normal conditions:
+We conducted manual tests to evaluate the program's under normal conditions:
 
 After around 50 seconds of execution, here is the visual state. The 2 wholesalers have almost no funds left.
 ![state-final.png](imgs/state-final.png)
 Closing the window show the final report with the expected final amount of money.
 ![message-final.png](imgs/message-final.png)
 
-Additionally, we made multiple manual tests with varying numbers of instances for each entity and different initial funds. We executed the program and verified that the results met our expectations.
+Additionally, we made multiple manual tests with varying numbers of instances for each entity, different initial funds and sleep durations. We executed the program and verified that the results met our expectations.
 
 **Automated tests**  
 Do to more advanced testing on logic and concurrency protections, we tried to write some GoogleTest tests, mostly in the form of integration tests. To avoid needing to setup a Qt UI interface, we disabled the usage of the `interface` attribute, so we don't call `setInterface`. (Therefore the attribute `interface` is `NULLPTR` in tests). We created a macro `NTEST` used like this: `NTEST(interface...)` that doesn't run the given instruction in case the `GTEST` macro has been defined. This is kind of a "headless" mode. The interface is just a visualizer, we don't need them to test the logic and behaviors.
@@ -145,8 +142,3 @@ As it was a first experiment with GoogleTest we didn't have time to test all log
 Our primary objective was to efficiently handle concurrency in our dynamic sales simulation application. To achieve this, we created a reliable system to protect crucial resources in a multi-threaded environment by strategically placing multiple mutexes around critical code sections.
 
 This system ensures that each entity has exclusive access to its essential resources, preventing conflicts and ensuring data consistency. Our approach also emphasizes efficiency by minimizing delays in program execution, especially when handling trade functions.
-
-
-- TODO dans factory::orderResources(). 1 de quantité as variable quantity for code evolution (or add CONST STATIC for recette d'ingredients) + vérifier stock[it] < qtyNeeded
-
-- TODO voir où on check la quantité d'un stock car on peut l'obtenir à partir de getItemsForSale.first == item voulu et on check .second qui nous dira la quantité disponible.
