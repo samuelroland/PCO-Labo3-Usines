@@ -1,3 +1,5 @@
+/* Modified by: Vitória Oliveira and Samuel Roland */
+
 #include "extractor.h"
 #include "costs.h"
 #include <pcosynchro/pcothread.h>

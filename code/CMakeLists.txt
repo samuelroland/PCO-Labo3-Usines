@@ -1,3 +1,4 @@
+# Modified by: Vitória Oliveira and Samuel Roland
 # Thanks to Aubry (in pair with resources.qrc)
 cmake_minimum_required(VERSION 3.5)
 

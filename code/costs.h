@@ -1,3 +1,5 @@
+/* Modified by: Vitória Oliveira and Samuel Roland */
+
 #ifndef COSTS_H
 #define COSTS_H
 

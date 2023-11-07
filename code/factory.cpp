@@ -1,3 +1,5 @@
+/* Modified by: Vitória Oliveira and Samuel Roland */
+
 #include "factory.h"
 #include "costs.h"
 #include "extractor.h"

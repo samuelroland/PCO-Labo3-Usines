@@ -1,3 +1,5 @@
+/* Modified by: Vitória Oliveira and Samuel Roland */
+
 #include "../extractor.h"
 #include "../factory.h"
 #include "../seller.h"

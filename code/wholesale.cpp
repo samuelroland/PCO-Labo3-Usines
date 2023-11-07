@@ -1,3 +1,5 @@
+/* Modified by: Vitória Oliveira and Samuel Roland */
+
 #include "wholesale.h"
 #include "costs.h"
 #include "factory.h"

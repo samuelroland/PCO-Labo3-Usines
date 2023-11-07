@@ -1,3 +1,5 @@
+/* Modified by: Vitória Oliveira and Samuel Roland */
+
 #ifndef SELLER_H
 #define SELLER_H
 

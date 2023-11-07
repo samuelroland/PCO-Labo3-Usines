@@ -1,3 +1,5 @@
+/* Modified by: Vitória Oliveira and Samuel Roland */
+
 #include "utils.h"
 
 void Utils::endService() {
